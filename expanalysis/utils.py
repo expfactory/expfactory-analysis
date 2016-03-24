@@ -1,10 +1,8 @@
 """
 
 functions for working with experiment factory results
-from collections import OrderedDict
 
 """
-from collections import OrderedDict
 import simplejson as json
 import requests
 import __init__
@@ -37,12 +35,6 @@ def get_pages(url="http://www.expfactory.org/api/results",access_token=None):
     
     return results
      
-
-def unwrap_results(results,field="taskdata"):
-    '''unwrap_results parses any ordered dicts (the taskdata) into standard dictionaries for easier queries
-    :param results: a list of results dictionaries obtained from expfactory/api/results, where taskdata (or another field) is expected to be an ordered dict
-    :param field: the OrderedDict field
-    '''
     
 
 def get_url(url,headers=None):
