@@ -3,7 +3,6 @@
 functions for working with experiment factory results
 
 """
-import simplejson as json
 import requests
 import __init__
 import pandas
