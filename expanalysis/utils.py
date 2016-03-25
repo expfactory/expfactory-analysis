@@ -66,7 +66,7 @@ def load_result(result):
     return df
 
 
-def clean_df(df, drop_columns = None,drop_na=True):
+def clean_df(df, drop_columns = None, drop_na=True):
     '''clean_df returns a pandas dataset after removing a set of default generic 
     columns. Optional variable drop_cols allows a different set of columns to be dropped
     :df: a pandas dataframe, loaded via load_result
@@ -80,11 +80,10 @@ def clean_df(df, drop_columns = None,drop_na=True):
     # Drop unnecessary columns, all null rows
     df = df.query('trial_id not in  @drop_trial_ids')
     if drop_na == True:
-        df = df.dropna()
+        df = df.dropna(how = 'all')
     return df
 
 
 def get_drop_columns():
     return ['view_history', 'stimulus', 'trial_index', 'internal_node_id', 
-            'time_elapsed', 'exp_id', 'stim_duration', 'block_duration', 
-            'feedback_duration','timing_post_trial']
+           'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial']
