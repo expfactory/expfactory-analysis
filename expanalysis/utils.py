@@ -63,7 +63,6 @@ def load_result(result):
             df = pandas.read_json(result)
         else:
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
- 
     return df
 
 
