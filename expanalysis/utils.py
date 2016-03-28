@@ -91,3 +91,17 @@ def clean_df(df, drop_columns = None, drop_na=True):
 def get_drop_columns():
     return ['view_history', 'stimulus', 'trial_index', 'internal_node_id', 
            'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial']
+
+
+
+def time_diff(t1, t2, output = 'hour'):
+    '''Returns time elapsed between two time points. Specify output format as 
+    "min", "hour", or "day"
+    '''
+    divisor = {'min': 60.0, 'hour': 3600.0, 'day': 86400.0}
+    FMT = '%Y-%m-%d %H:%M:%S'
+    t1 = datetime.datetime.strptime(t1,FMT)
+    t2 = datetime.datetime.strptime(t2,FMT)
+    diff = (max(t1,t2) - min(t1,t2))
+    diff = diff.seconds + diff.days * 86400
+    return diff/divisor[output]
