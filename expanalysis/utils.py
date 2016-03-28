@@ -73,14 +73,18 @@ def clean_df(df, drop_columns = None, drop_na=True):
     :param drop_columns: a list of columns to drop. If not specified, a default list will be used from utils.get_dropped_columns()
     '''
     # Drop unnecessary columns
+    print(len(df))
     if drop_columns == None:
         drop_columns = get_drop_columns()   
     df.drop(drop_columns, axis=1, inplace=True, errors='ignore')
+    print(len(df))
     drop_trial_ids = ['welcome', 'instruction', 'attention_check','end']
     # Drop unnecessary columns, all null rows
     df = df.query('trial_id not in  @drop_trial_ids')
+    print(len(df))
     if drop_na == True:
         df = df.dropna(how = 'all')
+    print(len(df))
     return df
 
 

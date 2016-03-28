@@ -7,14 +7,12 @@ Created on Thu Mar 24 16:03:04 2016
 
 from expanalysis.api import get_results
 from expanalysis.utils import clean_df
-from collections import OrderedDict as odict
 import pandas
-import numpy
 import datetime
 
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
 access_token = f.read()
-results = get_results(access_token=access_token)
+#results = get_results(access_token=access_token)
 
 
 def time_diff(t1, t2, output = 'hour'):
@@ -28,83 +26,39 @@ def time_diff(t1, t2, output = 'hour'):
     diff = (max(t1,t2) - min(t1,t2))
     diff = diff.seconds + diff.days * 86400
     return diff/divisor[output]
-    
-    
-#jsPsych specific
-
-def get_task_stats(df, silent = False):
-    '''Returns generic stats about tasks (not questionnaires) including time taken,
-    time spent on instructions. Will print out the stats if silent is false
-    '''
-    stats = odict({})
-    experiments = numpy.sort(pandas.unique(df.experiment))
-    for exp_id in experiments:
-        exp_df = select_experiment(df, exp_id, clean = False)
-        if 'trial_id' in exp_df.columns:
-            exp_min = exp_df.groupby('worker').time_elapsed.max()/60000
-            exp_min = {'mean': exp_min.mean(), 'std': exp_min.std(), 'unit': 'minute'}
-            instruct_sec = exp_df.query('trial_id == "instruction" or trial_id == "instructions"') \
-                .groupby('worker').time_elapsed.max()/1000
-            instruct_sec = {'mean': instruct_sec.mean(), 'std': instruct_sec.std(), 'unit': 'seconds'}
-            stats[exp_id] = {'exp_min': exp_min, \
-                                        'instruct_sec': instruct_sec}  
-    #if silent is false, print the stats out nicely
-    if silent == False:
-        rows = [[name, round(i['exp_min']['mean'],2), round(i['instruct_sec']['mean'],2)] \
-            for name, i in stats.items()]
-        rows = [['exp', 'time (min)', 'instruct time (sec)'],['','', '']] + rows
-        for row in rows:
-            print("{: >45} {: >20} {: >20}".format(*row)) 
-    return stats
-            
 
 class Results:
     def __init__(self, access_token, clean = True):
-        self.data_json = get_results(access_token=access_token)
-        self.data = self.results_to_df(self.data_json)
+        self.data_json = get_results(access_token=access_token) #original data
+        self.data = self.results_to_df() #active data
         if clean:
-            self.data = self.clean_results(self.data)
+            self.clean_results()
         self.battery = None
         self.experiment = None
         self.worker = None
     
-    def set_battery(self, battery):
-        '''Subset results to the specific battery, or array of batteries
-            battery may be an array or a string
+    #*******************************************
+    #
+    #*******************************************
+    def set_battery(self, battery, reset = False):
+        '''Subset data to the specific battery, or array of batteries
+            battery may be an array or a string. If reset is true, the data will
+            be reset to a cleaned dataframe
         '''
+        if reset:
+            self.reset_data()
         self.battery = battery
-        self.data = self.select_battery(self.data, battery)
-    
-    def set_experiment(self, exp_id):
-        '''Subset results to the specific experiment, or array of experiments
-            exp_id may be an array or a string
-        '''
-        self.experiment = exp_id
-        self.data = self.select_experiment(self.data, exp_id)
-        
-    def set_worker(self, worker_id):
-        self.worker = worker_id
-        self.data = self.select_worker(self.data, worker_id)
-        
-    def reset_data(self, clean = True):
-        self.data = self.results_to_df(self.data_json)
-        if clean:
-            self.data = self.clean_results(self.data)
-    
-    def get_results(self):
-        return self.data
-        
-    def results_to_df(self, results):
-        if isinstance(results,list):
-            df = pandas.DataFrame(results)
-            return df
+        self.data = self.select_battery(battery)
+    def results_to_df(self):
+        if isinstance(self.data_json,list):
+            return pandas.DataFrame(self.data_json)
         else:
             print "Results not a list. Must supply loaded results" 
-        return df
 
-    def clean_results(self, df):
+    def clean_results(self):
         '''clean results: remove incomplete experiments and cleans up identifier columns values
         '''
+        df = self.data
         if 'completed' in df.columns:
             #remove partially completed experiments
             df = df.query('completed == True') 
@@ -120,7 +74,50 @@ class Results:
             df.loc[:,'worker'] = [worker['id'].encode('utf-8') for worker in df['worker']]
         else:
             print "Results have already been claned"
-        return df
+        self.data = df
+        
+    def set_experiment(self, exp_id, reset = False):
+        '''Subset data to the specific experiment, or array of experiments
+            exp_id may be an array or a string. If reset is true, the data will
+            be reset to a cleaned dataframe
+        '''
+        if reset:
+            self.reset_data()
+        self.experiment = exp_id
+        self.data = self.select_experiment(exp_id)
+        
+    def set_worker(self, worker_id, reset = False):
+        '''Subset data to the specific worker, or array of workers. Worker_id
+        may be an array or a string. If reset is true, the data will
+            be reset to a cleaned dataframe
+        '''
+        if reset:
+            self.reset_data()
+        self.worker = worker_id
+        self.data = self.select_worker(worker_id)
+        
+    def get_settings(self, silent = False):
+        '''Returns the settings for the current active dataset
+            (battery, experiment, worker)
+        '''
+        if silent == False:
+            print('Battery: ', self.battery)
+            print('Experiment: ', self.experiment)
+            print('Worker: ', self.worker)
+        return ({'battery': self.battery,
+                 'experiment': self.experiment,
+                 'worker': self.worker})
+        
+    def reset_results(self, clean = True):
+        self.data = self.results_to_df()
+        if clean:
+            self.clean_results()
+        self.battery = None
+        self.experiment = None
+        self.worker = None
+    
+    def get_results(self):
+        return self.data
         
     def select_battery(self, battery):
         '''Selects a battery (or batteries) from results object and sorts based on worker and time of experiment completion
@@ -137,18 +134,22 @@ class Results:
         '''Selects an experiment (or experiments) from results object and sorts based on worker and time of experiment completion
         '''
         def extract_experiment(df, worker):
-            df = df.query("worker == %s" % worker)
+            df = df.query("worker == '%s'" % worker)
             #if there are multiple experiments for one worker, check if they are all the same
-            if list(df['data']).count(df['data'].iloc[0]) == len(df):
-                exp_data = df.iloc[0]['data']
-            assert isinstance(exp_data, list), \
-                "More than one %s experiment found for %s" % (exp_id, worker)
+            assert df['datetime'].value_counts().sum() <= len(exp_id), \
+                "More than one experiment out of %s found for %s" % (exp_id, worker)
             trial_list = []
-            for trial in exp_data:
-                trialdata = trial['trialdata']
-                trialdata['dateTime'] = trial['dateTime']
-                trialdata['worker'] = worker
-                trial_list.append(trialdata)
+            for i,row in df.iterrows():
+                battery = row['battery']
+                experiment = row['experiment']
+                exp_data = row['data']
+                for trial in exp_data:
+                    trialdata = trial['trialdata']
+                    trialdata['battery'] = battery
+                    trialdata['experiment'] = experiment
+                    trialdata['dateTime'] = trial['dateTime']
+                    trialdata['worker'] = worker
+                    trial_list.append(trialdata)
             return trial_list
         
         if isinstance(exp_id, (unicode, str)):
@@ -171,12 +172,31 @@ class Results:
             worker = [worker]
         df = self.data
         df = df.query("worker in %s" % worker)
-        df.sort_values(by = ['experiment', 'datetime'], inplace = True)
+        df = df.sort_values(by = ['experiment', 'datetime'])
         df.reset_index(inplace = True)
         return df
         
+    #jsPsych specific
+    def calc_time_taken(self):
+        '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
+        '''
+        exp_lengths = []
+        for i,row in df.iterrows():
+            #ensure there is a time elapsed variable
+            assert 'time_elapsed' in df.iloc[0]['data'][-1]['trialdata'].keys(), \
+                '"time_elapsed" not found for at least one dataset in these results'
+            #Set the length of the experiment to the time elapsed on the last 
+            #jsPsych trial
+            exp_lengths.append(row['data'][-1]['trialdata']['time_elapsed']/1000.0)
+        self.data['time_taken'] = exp_lengths
     
-
-
+    def print_time_taken(self):
+        '''Prints time taken for each experiment in minutes
+        '''
+        assert 'time_taken' in self.data, \
+            '"time_taken" has not been calculated yet. Use calc_time_taken method'
+        print((df.groupby('experiment')['time_taken'].mean()/60.0).round(2))
+        
+    
 
 
