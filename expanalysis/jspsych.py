@@ -8,7 +8,7 @@ def calc_time_taken(results):
     '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
     '''
     data = results.get_results()
-    if results.get_filters()['experiment'] == None:
+    if results.get_filters(silent = True)['experiment'] == None:
         exp_lengths = []
         for i,row in data.iterrows():
             #ensure there is a time elapsed variable
@@ -24,6 +24,8 @@ def print_time_taken(results):
     '''
     assert 'time_taken' in results.get_results(), \
         '"time_taken" has not been calculated yet. Use calc_time_taken method'
-    print((results.get_results().groupby('experiment')['time_taken'].mean()/60.0).round(2))
+    time_taken = (results.get_results().groupby('experiment')['time_taken'].mean()/60.0).round(2)
+    print(time_taken)
+    return time_taken
 
 
