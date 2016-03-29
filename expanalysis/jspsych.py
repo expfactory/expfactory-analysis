@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 28 16:07:54 2016
+'''
+analysis/results.py: part of expfactory package
+jspsych functions
 
-@author: ian
-"""
+'''
 
 def calc_time_taken(results):
     '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
@@ -26,3 +25,5 @@ def print_time_taken(results):
     assert 'time_taken' in results.get_results(), \
         '"time_taken" has not been calculated yet. Use calc_time_taken method'
     print((results.get_results().groupby('experiment')['time_taken'].mean()/60.0).round(2))
+
+

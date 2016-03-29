@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 24 16:03:04 2016
+'''
+analysis/results.py: part of expfactory package
+results class
 
-@author: ian
-"""
+'''
 
 from expanalysis.api import get_results
 from utils import clean_df
@@ -67,17 +66,17 @@ class Results:
         if reset:
             self.reset_data()
         if battery != None:
-            assert battery in self.data['battery'], \
+            assert battery in self.data['battery'].values, \
                 "The battery '%s' not found in results. Try resetting the results" % (battery)
             self.battery = battery
             self.data = select_battery(self, battery)
         if experiment != None:
-            assert experiment in self.data['experiment'], \
+            assert experiment in self.data['experiment'].values, \
                 "The experiment '%s' not found in results. Try resetting the results" % (experiment)
             self.experiment = experiment
             self.data = select_experiment(self, experiment)
         if worker != None:
-            assert worker in self.data['worker'], \
+            assert worker in self.data['worker'].values, \
                 "The worker ID '%s' not found in results. Try resetting the results" % (worker)
             self.worker = worker
             self.data = select_worker(self, worker)
@@ -117,7 +116,7 @@ def select_battery(results, battery):
     df.reset_index(inplace = True)
     return df
     
-def select_experiment(results, exp_id, clean = True, drop_columns = None, drop_na = True):
+def select_experiment(results, exp_id):
     '''Selects an experiment (or experiments) from results object and sorts based on worker and time of experiment completion
     '''
     if isinstance(exp_id, (unicode, str)):
@@ -138,7 +137,7 @@ def select_worker(results, worker):
     df.reset_index(inplace = True)
     return df   
 
-def extract_experiments(results, clean = True, drop_columns = None, drop_na = True):
+def extract_experiments(results, clean = True, drop_columns = None, drop_rows = None, drop_na = True):
     df = results.get_results()
     
     #ensure there is only one dataset for each battery/experiment/worker combination
@@ -160,7 +159,7 @@ def extract_experiments(results, clean = True, drop_columns = None, drop_na = Tr
             trial_list.append(trialdata)
     df = pandas.DataFrame(trial_list)
     if clean == True:
-        df = clean_df(df, drop_columns, drop_na)
+        df = clean_df(df, drop_columns, drop_rows, drop_na)
     df.reset_index(inplace = True)
     return df
         

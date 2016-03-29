@@ -65,35 +65,35 @@ def load_result(result):
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
     return df
 
-
-def clean_df(df, drop_columns = None, drop_na=True):
+def clean_df(df, drop_columns = None, drop_rows = None, drop_na=True):
     '''clean_df returns a pandas dataset after removing a set of default generic 
     columns. Optional variable drop_cols allows a different set of columns to be dropped
     :df: a pandas dataframe, loaded via load_result
     :param drop_columns: a list of columns to drop. If not specified, a default list will be used from utils.get_dropped_columns()
+    :param drop_trials: a dictionary of columns:rows to drop pairs. If not specified, a default list will be used from utils.get_dropped_rows()
     '''
     # Drop unnecessary columns
-    print(len(df))
     if drop_columns == None:
         drop_columns = get_drop_columns()   
     df.drop(drop_columns, axis=1, inplace=True, errors='ignore')
-    print(len(df))
-    drop_trial_ids = ['welcome', 'instruction', 'attention_check','end']
-    # Drop unnecessary columns, all null rows
-    df = df.query('trial_id not in  @drop_trial_ids')
-    print(len(df))
+    if drop_rows == None:
+        drop_rows = get_drop_rows()
+    # Drop unnecessary rows, all null rows
+    for key in drop_rows.keys():
+        df = df.query('%s not in  %s' % (key, drop_rows[key]))
     if drop_na == True:
         df = df.dropna(how = 'all')
-    print(len(df))
     return df
 
 
 def get_drop_columns():
     return ['view_history', 'stimulus', 'trial_index', 'internal_node_id', 
            'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial']
-
-
-
+           
+def get_drop_rows():
+    return {'trial_id': ['welcome', 'instruction', 'attention_check','end']}
+           
+           
 def time_diff(t1, t2, output = 'hour'):
     '''Returns time elapsed between two time points. Specify output format as 
     "min", "hour", or "day"
