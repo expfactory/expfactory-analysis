@@ -1,5 +1,5 @@
 '''
-analysis/results.py: part of expfactory package
+expanalysis/results.py: part of expfactory package
 results class
 
 '''

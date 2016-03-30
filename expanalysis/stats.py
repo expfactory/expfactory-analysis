@@ -1,5 +1,5 @@
 '''
-analysis/stats.py: part of expfactory package
+expanalysis/stats.py: part of expfactory package
 stats functions
 
 '''
