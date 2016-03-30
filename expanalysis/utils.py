@@ -30,6 +30,8 @@ def get_pages(url="http://www.expfactory.org/api/results",access_token=None):
            url = data["next"]
        else:       
            print "Error: %s" %(r.reason)
+           if (r.reason) == 'UNAUTHORIZED':
+               break
     print "Found %s results!" %(len(results))
     
     return results
@@ -65,19 +67,21 @@ def load_result(result):
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
     return df
 
-def clean_df(df, drop_columns = None, drop_rows = None, drop_na=True):
+def clean_df(df, experiment = None, drop_columns = None, drop_na=True):
     '''clean_df returns a pandas dataset after removing a set of default generic 
     columns. Optional variable drop_cols allows a different set of columns to be dropped
-    :df: a pandas dataframe, loaded via load_result
+    :df: a pandas dataframe
+    :param experiment: a string identifying the experiment used to automatically drop unnecessary columns. df should not have multiple experiments if this flag is set!
     :param drop_columns: a list of columns to drop. If not specified, a default list will be used from utils.get_dropped_columns()
-    :param drop_trials: a dictionary of columns:rows to drop pairs. If not specified, a default list will be used from utils.get_dropped_rows()
     '''
     # Drop unnecessary columns
     if drop_columns == None:
         drop_columns = get_drop_columns()   
     df.drop(drop_columns, axis=1, inplace=True, errors='ignore')
-    if drop_rows == None:
-        drop_rows = get_drop_rows()
+    if experiment != None:
+        assert sum(df['experiment'] == experiment) == len(df), \
+            "An experiment was specified, but the dataframe has other experiments!"      
+        drop_rows = get_drop_rows(experiment)
     # Drop unnecessary rows, all null rows
     for key in drop_rows.keys():
         df = df.query('%s not in  %s' % (key, drop_rows[key]))
@@ -90,9 +94,15 @@ def get_drop_columns():
     return ['view_history', 'stimulus', 'trial_index', 'internal_node_id', 
            'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial']
            
-def get_drop_rows():
-    return {'trial_id': ['welcome', 'instruction', 'attention_check','end']}
-           
+def get_drop_rows(experiment):
+    '''Function used by clean_df to drop rows from dataframes with one experiment
+    :experiment: experiment key used to look up which rows to drop from a dataframe
+    '''
+    lookup = {'stroop': {'trial_id': ['welcome', 'instruction', 'attention_check','end', 'fixation']}}
+    assert experiment in lookup.keys(), \
+        "Automatic lookup of drop rows failed: experiment not found in lookup table."
+    return lookup[experiment]
+       
            
 def time_diff(t1, t2, output = 'hour'):
     '''Returns time elapsed between two time points. Specify output format as 

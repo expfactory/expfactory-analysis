@@ -5,13 +5,14 @@ results class
 '''
 
 from expanalysis.api import get_results
-from utils import clean_df
+from expanalysis.utils import clean_df
 import pandas
 
 class Results:
     def __init__(self, access_token, clean = True):
         self.data_json = get_results(access_token=access_token) #original data
         self.data = self.results_to_df() #active data
+        self.validate()
         if clean:
             self.clean_results()
         self.battery = None
@@ -21,15 +22,17 @@ class Results:
     #*******************************************
     #
     #*******************************************
-    def set_battery(self, battery, reset = False):
-        '''Subset data to the specific battery, or array of batteries
-            battery may be an array or a string. If reset is true, the data will
-            be reset to a cleaned dataframe
-        '''
-        if reset:
-            self.reset_data()
-        self.battery = battery
-        self.data = self.select_battery(battery)
+    def validate(self):
+        class ValidationError(Exception):
+            pass
+        if 'battery' not in self.data:
+            raise ValidationError('"battery" column not found in results')
+        elif 'experiment' not in self.data:
+            raise ValidationError('"experiment" column not found in results')
+        elif 'worker' not in self.data:
+            raise ValidationError('"worker" column not found in results')
+        elif 'datetime' not in self.data:
+            raise ValidationError('"datetime" column not found in results')
         
     def results_to_df(self):
         if isinstance(self.data_json,list):
@@ -59,9 +62,13 @@ class Results:
         self.data = df
     
     def filter(self, battery = None, experiment = None, worker = None, reset = False):
-        '''Subset data to the specific battery(s), experiment(s) or worker(s). Each
+        '''Subset results to the specific battery(s), experiment(s) or worker(s). Each
             attribute may be an array or a string. If reset is true, the data will
             be reset to a cleaned dataframe
+        :param battery: a string or array of strings to select the battery(s)
+        :param experiment: a string or array of strings to select the experiment(s)
+        :param worker: a string or array of strings to select the worker(s)
+        :param reset: boolean. If true calls reset_data before filtering
         '''
         if reset:
             self.reset_data()
@@ -84,6 +91,7 @@ class Results:
     def get_filters(self, silent = False):
         '''Returns the settings for the current active dataset
             (battery, experiment, worker)
+        :param silent: boolean, if false prints out filters
         '''
         if silent == False:
             print 'Battery: ', self.battery
@@ -94,6 +102,9 @@ class Results:
                  'worker': self.worker})
         
     def reset_results(self, clean = True):
+        '''resets the data to the original loaded value and cleans if flag is set
+        :param clean: boolean, if true cleans the data
+        '''
         self.data = self.results_to_df()
         if clean:
             self.clean_results()
@@ -102,11 +113,16 @@ class Results:
         self.worker = None
     
     def get_results(self):
+        '''  Returns results in their current state (cleaned, filtered, etc.)
+        '''
         return self.data
     
 
 def select_battery(results, battery):
     '''Selects a battery (or batteries) from results object and sorts based on worker and time of experiment completion
+    :results: a Results object
+    :battery: a string or array of strings to select the battery(s)
+    :return df: dataframe containing the appropriate result subset
     '''
     if isinstance(battery, (unicode, str)):
         battery = [battery]
@@ -118,6 +134,9 @@ def select_battery(results, battery):
     
 def select_experiment(results, exp_id):
     '''Selects an experiment (or experiments) from results object and sorts based on worker and time of experiment completion
+    :results: a Results object
+    :param exp_id: a string or array of strings to select the experiment(s)
+    :return df: dataframe containing the appropriate result subset
     '''
     if isinstance(exp_id, (unicode, str)):
         exp_id = [exp_id]
@@ -128,6 +147,9 @@ def select_experiment(results, exp_id):
     
 def select_worker(results, worker):
     '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
+    :results: a Results object
+    :worker: a string or array of strings to select the worker(s)
+    :return df: dataframe containing the appropriate result subset
     '''
     if isinstance(worker, (unicode, str)):
         worker = [worker]
@@ -137,9 +159,17 @@ def select_worker(results, worker):
     df.reset_index(inplace = True)
     return df   
 
-def extract_experiments(results, clean = True, drop_columns = None, drop_rows = None, drop_na = True):
-    df = results.get_results()
-    
+def extract_experiment(results, experiment, clean = True, drop_columns = None, drop_na = True):
+    '''Returns a dataframe that has expanded the data column of the results object for the specified experiment.
+    Each row of this new dataframe is a data row for the specified experiment.
+    :results: a Results object
+    :experiment: a string identifying one experiment
+    :param clean: boolean, if true call clean_df on the data
+    :param drop_columns: list of columns to pass to clean_df
+    :param drop_na: boolean to pass to clean_df
+    :return df: dataframe containing the extracted experiment
+    '''
+    df = select_experiment(results, experiment)
     #ensure there is only one dataset for each battery/experiment/worker combination
     assert sum(df.groupby(['battery', 'experiment', 'worker']).size()>1)==0, \
         "More than one dataset found for at least one battery/experiment/worker combination"
@@ -159,7 +189,8 @@ def extract_experiments(results, clean = True, drop_columns = None, drop_rows = 
             trial_list.append(trialdata)
     df = pandas.DataFrame(trial_list)
     if clean == True:
-        df = clean_df(df, drop_columns, drop_rows, drop_na)
+        df = clean_df(df, experiment, drop_columns, drop_na)
     df.reset_index(inplace = True)
     return df
-        
+
+    
