@@ -98,7 +98,8 @@ def get_drop_rows(experiment):
     '''Function used by clean_df to drop rows from dataframes with one experiment
     :experiment: experiment key used to look up which rows to drop from a dataframe
     '''
-    lookup = {'stroop': {'trial_id': ['welcome', 'instruction', 'attention_check','end', 'fixation']}}
+    lookup = {'stroop': {'trial_id': ['welcome', 'instruction', 'attention_check','end', 'fixation']}, \
+              'simon':  {'trial_id': ['welcome', 'instruction', 'attention_check','end', 'reset_trial', 'test_intro']}}
     assert experiment in lookup.keys(), \
         "Automatic lookup of drop rows failed: experiment not found in lookup table."
     return lookup[experiment]

@@ -42,7 +42,7 @@ def compute_contrast(df, dep_var, ind_var, drop_rows = {}, plot=True):
                 results["plot"] = sns.jointplot(ind_var,dep_var, data = df)
         else:
             ind_labels = pandas.unique(ind_vec)
-            print("Found %s independent variables: %s" %(len(ind_labels),",".join(ind_labels.tolist())))
+            print("Found %s independent variables: %s" %(len(ind_labels),", ".join([str(label) for label in ind_labels])))
             if (len(ind_labels) == 2):
                 vals1 = df[ind_vec == ind_labels[0]][dep_var]
                 vals2 = df[ind_vec == ind_labels[1]][dep_var]

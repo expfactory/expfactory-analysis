@@ -3,9 +3,9 @@
 Temporary file for testing analysis
 """
 
-from expanalysis.results import Results, extract_experiment
-from expanalysis.stats import compute_contrast, compute_regression
-from expanalysis.experiments.jspsych import *
+from results import Results, extract_experiment
+from stats import compute_contrast, compute_regression
+from jspsych import *
 
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
 access_token = f.read()
@@ -21,3 +21,7 @@ results.get_results().groupby('worker').count()
 stroop_df = extract_experiment(results, 'stroop')
 compute_contrast(stroop_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = False)
 
+#for stroop
+simon_df = extract_experiment(results, 'simon')
+compute_contrast(simon_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = False)
+compute_regression(simon_df, 'rt ~ condition')

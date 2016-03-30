@@ -5,7 +5,7 @@ results class
 '''
 
 from expanalysis.api import get_results
-from expanalysis.utils import clean_df
+from utils import clean_df
 import pandas
 
 class Results:
@@ -13,7 +13,8 @@ class Results:
         self.data_json = get_results(access_token=access_token) #original data
         self.data = self.results_to_df() #active data
         self.validate()
-        if clean:
+        self.clean = clean
+        if self.clean:
             self.clean_results()
         self.battery = None
         self.experiment = None
@@ -70,6 +71,7 @@ class Results:
         :param worker: a string or array of strings to select the worker(s)
         :param reset: boolean. If true calls reset_data before filtering
         '''
+        assert self.clean, "The results must be clean to filter"
         if reset:
             self.reset_data()
         if battery != None:
@@ -106,12 +108,28 @@ class Results:
         :param clean: boolean, if true cleans the data
         '''
         self.data = self.results_to_df()
-        if clean:
+        self.clean = clean
+        if self.clean:
             self.clean_results()
         self.battery = None
         self.experiment = None
         self.worker = None
     
+    def get_batteries(self):
+        '''  Returns array of workers in the active results
+        '''
+        return pandas.unique(self.data['battery'])  
+        
+    def get_experiments(self):
+        '''  Returns array of workers in the active results
+        '''
+        return pandas.unique(self.data['experiment'])  
+        
+    def get_workers(self):
+        '''  Returns array of workers in the active results
+        '''
+        return pandas.unique(self.data['worker'])        
+        
     def get_results(self):
         '''  Returns results in their current state (cleaned, filtered, etc.)
         '''
