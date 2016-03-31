@@ -5,6 +5,7 @@ Temporary file for testing analysis
 
 from results import Results, extract_experiment
 from stats import compute_contrast, compute_regression
+import numpy as np
 from jspsych import *
 
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
@@ -29,6 +30,6 @@ compute_contrast(simon_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'
 compute_regression(simon_df, 'rt ~ condition')
 
 #for two-stage
-two_stage_df = extract_experiment(results,'two_stage_decision', clean = False)
+two_stage_df = extract_experiment(results,'two_stage_decision', clean = True)
 
     
