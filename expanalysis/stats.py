@@ -63,10 +63,14 @@ def compute_regression(df, formula, drop_rows = {}):
     :param formula: R-style formula to pass to statsmodels. see: http://statsmodels.sourceforge.net/0.6.0/examples/notebooks/generated/formulas.html
     :param drop_rows: a dictionary of columns/value pairs used to drop rows. Drops rows where the row value for the column equals the value specified.
     '''
+    def extract_var(var):
+        if (var.find("(") + var.find("(")) != -2:
+            return var[var.find("(") + 1:var.find(")")]
+        return var
     def parse(formula):
         parse = ModelDesc.from_formula(formula)
-        dep_vars = [term.name() for term in parse.lhs_termlist]
-        ind_vars = [term.name() for term in parse.rhs_termlist]
+        dep_vars = [extract_var(term.name()) for term in parse.lhs_termlist]
+        ind_vars = [extract_var(term.name()) for term in parse.rhs_termlist]
         assert len(dep_vars) == 1, "Only one dependent variable allowed"
         if 'Intercept' in ind_vars:
             ind_vars.remove('Intercept')

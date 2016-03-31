@@ -52,7 +52,6 @@ def load_result(result):
     '''load_result returns a pandas data frame of a result variable, either a json data structure, a downloaded csv file from an individual experiment, or a tsv file exported from the expfactory-docker instance
     :param result: one of a csv (from jsPsych), tsv (from expfactory-docker) or json (from Jspsych)
     '''
-
     if isinstance(result,str):
         filey = os.path.abspath(result)
         file_name,ext = os.path.splitext(filey)
@@ -98,11 +97,44 @@ def get_drop_rows(experiment):
     '''Function used by clean_df to drop rows from dataframes with one experiment
     :experiment: experiment key used to look up which rows to drop from a dataframe
     '''
-    lookup = {'stroop': {'trial_id': ['welcome', 'instruction', 'attention_check','end', 'fixation']}, \
-              'simon':  {'trial_id': ['welcome', 'instruction', 'attention_check','end', 'reset_trial', 'test_intro']}}
-    assert experiment in lookup.keys(), \
-        "Automatic lookup of drop rows failed: experiment not found in lookup table."
-    return lookup[experiment]
+    gen_cols = ['welcome', 'instruction', 'attention_check','end'] #generic_columns to drop
+    lookup = {'adaptive_n_back': {'trial_id': gen_cols + []},
+                'angling_risk_task_always_sunny': {'trial_id': gen_cols + []}, 
+                'attention_network_task': {'trial_id': gen_cols + []}, 
+                'bickel_titrator': {'trial_id': gen_cols + []}, 
+                'choice_reaction_time': {'trial_id': gen_cols + []}, 
+                'columbia_card_task_cold': {'trial_id': gen_cols + []}, 
+                'columbia_card_task_hot': {'trial_id': gen_cols + []}, 
+                'dietary_decision': {'trial_id': gen_cols + []}, 
+                'digit_span': {'trial_id': gen_cols + []},
+                'directed_forgetting': {'trial_id': gen_cols + []},
+                'dot_pattern_expectancy': {'trial_id': gen_cols + []},
+                'go_nogo': {'trial_id': gen_cols + []},
+                'hierarchical_rule': {'trial_id': gen_cols + []},
+                'information_sampling_task': {'trial_id': gen_cols + []},
+                'keep_track': {'trial_id': gen_cols + []},
+                'kirby': {'trial_id': gen_cols + []},
+                'local_global_letter': {'trial_id': gen_cols + []},
+                'motor_selective_stop_signal': {'trial_id': gen_cols + []},
+                'probabilistic_selection': {'trial_id': gen_cols + []},
+                'psychological_refractory_period_two_choices': {'trial_id': gen_cols + []},
+                'recent_probes': {'trial_id': gen_cols + []},
+                'shift_task': {'trial_id': gen_cols + []},
+                'simple_reaction_time': {'trial_id': gen_cols + []},
+                'spatial_span': {'trial_id': gen_cols + []},
+                'stroop': {'trial_id': gen_cols + ['fixation']}, 
+                'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
+                'threebytwo': {'trial_id': gen_cols + []},
+                'tower_of_london': {'trial_id': gen_cols + []},
+                'two_stage_decision': {'trial_id': gen_cols + ['practice_intro', 'test_intro', 'wait']},
+                'willingness_to_wait': {'trial_id': gen_cols + []},
+                'writing_task': {}}    
+                
+    try:
+        return lookup[experiment]
+    except KeyError:
+        print "Automatic lookup of drop rows failed: experiment not found in lookup table."
+        return {}
        
            
 def time_diff(t1, t2, output = 'hour'):

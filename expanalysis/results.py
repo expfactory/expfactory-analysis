@@ -7,6 +7,7 @@ results class
 from expanalysis.api import get_results
 from utils import clean_df
 import pandas
+import numpy
 
 class Results:
     def __init__(self, access_token, clean = True):
@@ -118,17 +119,17 @@ class Results:
     def get_batteries(self):
         '''  Returns array of workers in the active results
         '''
-        return pandas.unique(self.data['battery'])  
+        return numpy.sort(pandas.unique(self.data['battery']))
         
     def get_experiments(self):
         '''  Returns array of workers in the active results
         '''
-        return pandas.unique(self.data['experiment'])  
+        return numpy.sort(pandas.unique(self.data['experiment']))
         
     def get_workers(self):
         '''  Returns array of workers in the active results
         '''
-        return pandas.unique(self.data['worker'])        
+        return numpy.sort(pandas.unique(self.data['worker'])) 
         
     def get_results(self):
         '''  Returns results in their current state (cleaned, filtered, etc.)
@@ -187,6 +188,7 @@ def extract_experiment(results, experiment, clean = True, drop_columns = None, d
     :param drop_na: boolean to pass to clean_df
     :return df: dataframe containing the extracted experiment
     '''
+    assert experiment in results.get_experiments(), "Experiment not found in results!"
     df = select_experiment(results, experiment)
     #ensure there is only one dataset for each battery/experiment/worker combination
     assert sum(df.groupby(['battery', 'experiment', 'worker']).size()>1)==0, \

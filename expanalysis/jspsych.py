@@ -29,6 +29,8 @@ def print_time_taken(results):
     return time_taken
 
 def get_average_variable(results, var):
+    '''Prints time taken for each experiment in minutes
+    '''
     averages = {}
     for exp in results.get_experiments():
         data = extract_experiment(results,exp)
@@ -51,3 +53,5 @@ def get_post_task_responses(results):
                 worker_responses[row['experiment']] = response
         question_responses[worker] = worker_responses
     return question_responses
+    
+    
