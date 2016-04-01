@@ -5,14 +5,24 @@ results class
 '''
 
 from expanalysis.api import get_results
-from utils import clean_df
+from utils import clean_df, load_result
 import pandas
 import numpy
+import os
 
 class Results:
-    def __init__(self, access_token, clean = True):
-        self.data_json = get_results(access_token=access_token) #original data
-        self.data = self.results_to_df() #active data
+    def __init__(self, access_token = None, results_file = None, clean = True):
+        """ loads data from expfactory or a file and puts it in a Results object.
+        
+        """
+        assert bool(access_token) != bool(results_file), \
+            "Supplied an access token and a file to load. Supply one or the other"
+        if access_token != None:
+            self.data_orig = get_results(access_token=access_token) #original data
+            self.data_orig = self.results_to_df()
+        else:
+            self.data_orig = load_result(results_file)
+        self.data = self.data_orig #active data
         self.validate()
         self.clean = clean
         if self.clean:
@@ -37,11 +47,11 @@ class Results:
             raise ValidationError('"datetime" column not found in results')
         
     def results_to_df(self):
-        if isinstance(self.data_json,list):
-            return pandas.DataFrame(self.data_json)
+        if isinstance(self.data_orig,list):
+            return pandas.DataFrame(self.data_orig)
         else:
             print "results not a list. Must supply loaded results" 
-
+            
     def clean_results(self):
         '''clean results: remove incomplete experiments and cleans up identifier columns values
         '''
@@ -56,11 +66,11 @@ class Results:
             #remove everything from experiment except exp_id
             df.loc[:,'experiment'] = [exp['exp_id'] for exp in df['experiment']]
             #convert datetime to string
-            df.loc[:,'datetime'] = [date.encode('utf-8') for date in df['datetime']]
+            df['datetime'].astype('str')
             #replace worker dictionary with string
             df.loc[:,'worker'] = [worker['id'].encode('utf-8') for worker in df['worker']]
         else:
-            print "results have already been claned"
+            print "results have already been cleaned"
         self.data = df
     
     def filter(self, battery = None, experiment = None, worker = None, reset = False):
@@ -108,7 +118,7 @@ class Results:
         '''resets the data to the original loaded value and cleans if flag is set
         :param clean: boolean, if true cleans the data
         '''
-        self.data = self.results_to_df()
+        self.data = self.data_orig
         self.clean = clean
         if self.clean:
             self.clean_results()
@@ -135,6 +145,21 @@ class Results:
         '''  Returns results in their current state (cleaned, filtered, etc.)
         '''
         return self.data
+        
+    def export_data(self, filey, orig = False):
+        file_name,ext = os.path.splitext(filey)
+        if orig:
+            df = self.data_orig
+        else:
+            df = self.data
+        if ext.lower() == ".csv":
+            df.to_csv(filey)
+        elif ext.lower() == ".pkl":
+            df.to_pickle(filey)
+        elif ext.lower() == ".json":
+            df.to_json(filey)
+        else:
+            print "File extension not recognized, must be .csv, .pkl, or .json." 
     
 
 def select_battery(results, battery):
