@@ -86,6 +86,14 @@ def clean_df(df, experiment = None, drop_columns = None, drop_na=True):
         df = df.query('%s not in  %s' % (key, drop_rows[key]))
     if drop_na == True:
         df = df.dropna(how = 'all')
+    #calculate correct responses if they haven't been calculated
+    if set(['key_press', 'correct_response']).issubset(df.columns):
+        if 'correct' in df.columns:
+            print('Dataframe had a "Correct" column that has been overwritten!')
+        df['correct'] = df['key_press'] == df['correct_response'] 
+    #convert all boolean columns to integer
+    for column in df.select_dtypes(include = ['bool']).columns:
+        df[column] = df[column].astype('int')
     return df
 
 
@@ -97,12 +105,12 @@ def get_drop_rows(experiment):
     '''Function used by clean_df to drop rows from dataframes with one experiment
     :experiment: experiment key used to look up which rows to drop from a dataframe
     '''
-    gen_cols = ['welcome', 'instruction', 'attention_check','end'] #generic_columns to drop
+    gen_cols = ['welcome', 'instruction', 'instruction', 'attention_check','end', 'post task questions'] #generic_columns to drop
     lookup = {'adaptive_n_back': {'trial_id': gen_cols + []},
                 'angling_risk_task_always_sunny': {'trial_id': gen_cols + []}, 
                 'attention_network_task': {'trial_id': gen_cols + []}, 
                 'bickel_titrator': {'trial_id': gen_cols + []}, 
-                'choice_reaction_time': {'trial_id': gen_cols + []}, 
+                'choice_reaction_time': {'trial_id': gen_cols + ['practice_intro', 'reset_trial']}, 
                 'columbia_card_task_cold': {'trial_id': gen_cols + []}, 
                 'columbia_card_task_hot': {'trial_id': gen_cols + []}, 
                 'dietary_decision': {'trial_id': gen_cols + []}, 
@@ -122,7 +130,7 @@ def get_drop_rows(experiment):
                 'shift_task': {'trial_id': gen_cols + []},
                 'simple_reaction_time': {'trial_id': gen_cols + []},
                 'spatial_span': {'trial_id': gen_cols + []},
-                'stroop': {'trial_id': gen_cols + ['fixation']}, 
+                'stroop': {'trial_id': gen_cols + ['fixation', 'practice_intro', 'test_intro', ]}, 
                 'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
                 'threebytwo': {'trial_id': gen_cols + []},
                 'tower_of_london': {'trial_id': gen_cols + []},

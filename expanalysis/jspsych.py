@@ -4,29 +4,38 @@ jspsych functions
 
 '''
 from results import select_worker, extract_experiment
+import numpy
 
 def calc_time_taken(results):
     '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
     '''
     data = results.get_results()
+    instruction_lengths = []
     exp_lengths = []
     for i,row in data.iterrows():
         #ensure there is a time elapsed variable
         assert 'time_elapsed' in row['data'][-1]['trialdata'].keys(), \
             '"time_elapsed" not found for at least one dataset in these results'
+        #sum time taken on instruction trials
+        instruction_length = numpy.sum([trial['trialdata']['time_elapsed'] for trial in row['data'] if reduce_word(trial['trialdata'].get('trial_id')) == 'instruction'])        
         #Set the length of the experiment to the time elapsed on the last 
         #jsPsych trial
-        exp_lengths.append(row['data'][-1]['trialdata']['time_elapsed']/1000.0)
-    data['time_taken'] = exp_lengths
+        experiment_length = row['data'][-1]['trialdata']['time_elapsed']
+        instruction_lengths.append(instruction_length/1000.0)
+        exp_lengths.append(experiment_length/1000.0)
+    data['total_time'] = exp_lengths
+    data['instruct_time'] = instruction_lengths
+    data['ontask_time'] = data['total_time'] - data['instruct_time']
         
-def print_time_taken(results):
+def print_time(results, time_col = 'ontask_time'):
     '''Prints time taken for each experiment in minutes
+    :param time_col: Dataframe column of time in seconds
     '''
-    assert 'time_taken' in results.get_results(), \
-        '"time_taken" has not been calculated yet. Use calc_time_taken method'
-    time_taken = (results.get_results().groupby('experiment')['time_taken'].mean()/60.0).round(2)
-    print(time_taken)
-    return time_taken
+    assert time_col in results.get_results(), \
+        '"%s" has not been calculated yet. Use calc_time_taken method' % (time_col)
+    time = (results.get_results().groupby('experiment')[time_col].mean()/60.0).round(2)
+    print(time)
+    return time
 
 def get_average_variable(results, var):
     '''Prints time taken for each experiment in minutes
@@ -53,5 +62,20 @@ def get_post_task_responses(results):
                 worker_responses[row['experiment']] = response
         question_responses[worker] = worker_responses
     return question_responses
+    
+def reduce_word(word):
+    """function that modifies a string so that it conforms to expfactory analysis
+    """
+    if isinstance(word,(str,unicode)):
+        word = word.strip().lower()
+        word = word.replace(" ", "_")
+        #define synonyms
+        if word in ['rt', 'reaction time']:
+            word = 'rt'
+        if word in ['instruction', 'instructions']:
+            word = 'instruction'
+        return word
+    
+    
     
     

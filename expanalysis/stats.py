@@ -4,13 +4,57 @@ stats functions
 
 '''
 from expanalysis.maths import check_numeric
+from results import extract_experiment
 from patsy import ModelDesc
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import scipy.stats as stats
 import seaborn as sns
 import pandas
+import numpy
+import hddm
 
+def basic_stats(results, columns = ['correct', 'rt'], groupby = []):
+    """ Calculate 
+    
+    """
+    
+    for experiment in results.get_experiments():
+        df = extract_experiment(results, experiment)
+        summary = df.describe()
+        if not set(columns).issubset(df.columns):
+            print "Columns selected were not in the dataframe. Printing generic info"
+            print summary
+        else:
+            summary = summary[columns].loc[['mean','std']]
+            print(summary)
+            if len(groupby) != 0:
+                summary = df.groupby(groupby)[columns].describe()
+                summary.query('level_1 in ["mean", "std"]', inplace = True)
+                print(summary)
+    return summary
+
+def EZ_diffusion(df):
+    assert 'correct' in df.columns, 'Could not calculate EZ DDM'
+    pc = df['correct'].mean()
+    vrt = numpy.var(df.query('correct == True')['rt'])
+    mrt = numpy.mean(df.query('correct == True')['rt'])
+    drift, thresh, non_dec = hddm.utils.EZ(pc, vrt, mrt)
+    return {'drift': drift, 'thresh': thresh, 'non_decision': non_dec}
+    
+
+def run_DDM(results, EZ = True):
+    experiment_DDM = {}
+    if EZ:
+        for experiment in results.get_experiments():
+            df = extract_experiment(results, experiment)
+            if 'correct' in df.columns:
+                experiment_DDM[experiment] = EZ_diffusion(df)
+            else:
+                print 'Could not calculate EZ DDM for %s. No "correct" column.' % (experiment)
+    return experiment_DDM
+    
+        
 
 def compute_contrast(df, dep_var, ind_var, drop_rows = {}, plot=True):
     '''compute_contrast calculates a contrast (either pearson correlation for numeric or ttest for not) between two variables in the data frame

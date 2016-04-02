@@ -84,22 +84,16 @@ class Results:
         '''
         assert self.clean, "The results must be clean to filter"
         if reset:
-            self.reset_data()
-        if battery != None:
-            assert battery in self.data['battery'].values, \
-                "The battery '%s' not found in results. Try resetting the results" % (battery)
-            self.battery = battery
-            self.data = select_battery(self, battery)
-        if experiment != None:
-            assert experiment in self.data['experiment'].values, \
-                "The experiment '%s' not found in results. Try resetting the results" % (experiment)
-            self.experiment = experiment
-            self.data = select_experiment(self, experiment)
+            self.reset()
         if worker != None:
-            assert worker in self.data['worker'].values, \
-                "The worker ID '%s' not found in results. Try resetting the results" % (worker)
-            self.worker = worker
             self.data = select_worker(self, worker)
+            self.worker = worker
+        if battery != None:
+            self.data = select_battery(self, battery)
+            self.battery = battery
+        if experiment != None:
+            self.data = select_experiment(self, experiment)
+            self.experiment = experiment
         
     def get_filters(self, silent = False):
         '''Returns the settings for the current active dataset
@@ -114,17 +108,23 @@ class Results:
                  'experiment': self.experiment,
                  'worker': self.worker})
         
-    def reset_results(self, clean = True):
+    def reset(self, battery = True, experiment = True, worker = True, clean = True):
         '''resets the data to the original loaded value and cleans if flag is set
         :param clean: boolean, if true cleans the data
+        :param battery: boolean, if true reset battery filter
+        :param experiment: boolean, if true reset experiment filter
+        :param worker: boolean, if true reset worker filter
         '''
         self.data = self.data_orig
         self.clean = clean
         if self.clean:
             self.clean_results()
-        self.battery = None
-        self.experiment = None
-        self.worker = None
+        if battery:
+            self.battery = None
+        if experiment:
+            self.experiment = None
+        if worker:
+            self.worker = None
     
     def get_batteries(self):
         '''  Returns array of workers in the active results
@@ -168,11 +168,17 @@ def select_battery(results, battery):
     :battery: a string or array of strings to select the battery(s)
     :return df: dataframe containing the appropriate result subset
     '''
+    Pass = True
     if isinstance(battery, (unicode, str)):
         battery = [battery]
     df = results.get_results()
+    for b in battery:
+        if not b in df['battery'].values:
+            print "Alert!:  The battery '%s' not found in results. Try resetting the results" % (b)  
+            Pass = False
+    assert Pass == True, "At least one battery was not found in results"
     df = df.query("battery in %s" % battery)
-    df = df.sort_values(by = ['worker', 'datetime'])
+    df = df.sort_values(by = ['battery', 'experiment', 'worker', 'datetime'])
     df.reset_index(inplace = True)
     return df
     
@@ -182,11 +188,17 @@ def select_experiment(results, exp_id):
     :param exp_id: a string or array of strings to select the experiment(s)
     :return df: dataframe containing the appropriate result subset
     '''
+    Pass = True
     if isinstance(exp_id, (unicode, str)):
         exp_id = [exp_id]
     df = results.get_results()
+    for e in exp_id:
+        if not e in df['experiment'].values:
+            print "Alert!: The experiment '%s' not found in results. Try resetting the results" % (e)
+            Pass = False
+    assert Pass == True, "At least one experiment was not found in results"
     df = df.query("experiment in %s" % exp_id)
-    df = df.sort_values(by = ['worker', 'battery'])
+    df = df.sort_values(by = ['experiment', 'worker', 'battery', 'datetime'])
     return df
     
 def select_worker(results, worker):
@@ -195,11 +207,17 @@ def select_worker(results, worker):
     :worker: a string or array of strings to select the worker(s)
     :return df: dataframe containing the appropriate result subset
     '''
+    Pass = True
     if isinstance(worker, (unicode, str)):
         worker = [worker]
     df = results.get_results()
+    for w in worker:
+        if not w in df['worker'].values:
+            print "Alert!: The experiment '%s' not found in results. Try resetting the results" % (w)
+            Pass = False
+    assert Pass == True, "At least one worker was not found in results"
     df = df.query("worker in %s" % worker)
-    df = df.sort_values(by = ['experiment', 'datetime'])
+    df = df.sort_values(by = ['worker', 'experiment', 'battery', 'datetime'])
     df.reset_index(inplace = True)
     return df   
 
