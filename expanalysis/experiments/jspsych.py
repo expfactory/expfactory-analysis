@@ -3,7 +3,7 @@ analysis/results.py: part of expfactory package
 jspsych functions
 
 '''
-from results import select_worker, extract_experiment
+from expanalysis.results import select_worker, extract_experiment
 import numpy
 
 def calc_time_taken(results):

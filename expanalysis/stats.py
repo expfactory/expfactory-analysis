@@ -4,7 +4,7 @@ stats functions
 
 '''
 from expanalysis.maths import check_numeric
-from results import extract_experiment
+from expanalysis.results import extract_experiment
 from patsy import ModelDesc
 import statsmodels.api as sm
 import statsmodels.formula.api as smf

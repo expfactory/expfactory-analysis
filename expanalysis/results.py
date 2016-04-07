@@ -5,7 +5,7 @@ results class
 '''
 
 from expanalysis.api import get_results
-from utils import clean_df, load_result
+from expanalysis.utils import clean_df, load_result
 import pandas
 import numpy
 import os

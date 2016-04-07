@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: expanalysis
+Version: 0.0.0
+Summary: Python module for experiment factory experiment analysis.
+Home-page: http://www.github.com/expfactory
+Author: ['Vanessa Sochat', 'Ian Eisenberg']
+Author-email: ['vsochat@stanford.edu', 'ieisenbe@stanford.edu ']
+License: LICENSE
+Description: UNKNOWN
+Keywords: analysis behavior neuroscience experiment factory
+Platform: UNKNOWN
