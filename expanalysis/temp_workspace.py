@@ -5,16 +5,15 @@ Temporary file for testing analysis
 
 from expanalysis.results import Results, extract_experiment
 from expanalysis.stats import compute_contrast, compute_regression, basic_stats
-import numpy as np
 from expanalysis.experiments.jspsych import *
 
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
 access_token = f.read()
 
 results = Results(access_token)
-if (len(results.get_results()) > 385):
-    results.export_data('/home/ian/Experiments/expfactory/data/firstPilot_results_clean.json')
-    results.export_data('/home/ian/Experiments/expfactory/data/firstPilot_results_orig.json', orig = True)
+if (len(results.get_results()) > 0):
+    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
+    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
 results.filter(battery = 'Self Regulation Pilot')
 
 calc_time_taken(results)
@@ -46,4 +45,3 @@ two_stage_df = extract_experiment(results,'two_stage_decision', clean = True)
 
 
 
-results = Results(results_file = '/home/ian/Experiments/expfactory/data/firstPilot_results_orig.json')

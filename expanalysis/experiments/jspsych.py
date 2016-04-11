@@ -4,6 +4,7 @@ jspsych functions
 
 '''
 from expanalysis.results import select_worker, extract_experiment
+from expanalysis.utils import check_template
 import numpy
 
 def calc_time_taken(results):
@@ -13,16 +14,20 @@ def calc_time_taken(results):
     instruction_lengths = []
     exp_lengths = []
     for i,row in data.iterrows():
-        #ensure there is a time elapsed variable
-        assert 'time_elapsed' in row['data'][-1]['trialdata'].keys(), \
-            '"time_elapsed" not found for at least one dataset in these results'
-        #sum time taken on instruction trials
-        instruction_length = numpy.sum([trial['trialdata']['time_elapsed'] for trial in row['data'] if reduce_word(trial['trialdata'].get('trial_id')) == 'instruction'])        
-        #Set the length of the experiment to the time elapsed on the last 
-        #jsPsych trial
-        experiment_length = row['data'][-1]['trialdata']['time_elapsed']
-        instruction_lengths.append(instruction_length/1000.0)
-        exp_lengths.append(experiment_length/1000.0)
+        if check_template(row['data']) == 'jspsych':
+            #ensure there is a time elapsed variable
+            assert 'time_elapsed' in row['data'][-1]['trialdata'].keys(), \
+                '"time_elapsed" not found for at least one dataset in these results'
+            #sum time taken on instruction trials
+            instruction_length = numpy.sum([trial['trialdata']['time_elapsed'] for trial in row['data'] if reduce_word(trial['trialdata'].get('trial_id')) == 'instruction'])        
+            #Set the length of the experiment to the time elapsed on the last 
+            #jsPsych trial
+            experiment_length = row['data'][-1]['trialdata']['time_elapsed']
+            instruction_lengths.append(instruction_length/1000.0)
+            exp_lengths.append(experiment_length/1000.0)
+        else:
+            instruction_lengths.append(numpy.nan)
+            exp_lengths.append(numpy.nan)
     data['total_time'] = exp_lengths
     data['instruct_time'] = instruction_lengths
     data['ontask_time'] = data['total_time'] - data['instruct_time']

@@ -144,7 +144,17 @@ def get_drop_rows(experiment):
         print "Automatic lookup of drop rows failed: experiment not found in lookup table."
         return {}
        
-           
+def check_template(data):
+    """Determines which template was used to create a data object
+    :data: the content of one row of a data column in a results dataframe
+    """
+    if isinstance(data,dict):
+        return 'survey'
+    elif isinstance(data,list):
+        return 'jspsych'
+    else:
+        return 'unknown'
+    
 def time_diff(t1, t2, output = 'hour'):
     '''Returns time elapsed between two time points. Specify output format as 
     "min", "hour", or "day"
