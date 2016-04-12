@@ -62,9 +62,12 @@ def get_post_task_responses(results):
         data = select_worker(results, worker)
         worker_responses = {}
         for i,row in data.iterrows():
-            if 'responses' in row['data'][-2]['trialdata'].keys():
-                response = row['data'][-2]['trialdata']['responses']
-                worker_responses[row['experiment']] = response
+            if check_template(row['data']) == 'jspsych':
+                if 'responses' in row['data'][-2]['trialdata'].keys():
+                    response = row['data'][-2]['trialdata']['responses']
+                    worker_responses[row['experiment']] = response
+                else:
+                    worker_responses[row['experiment']] = ''
         question_responses[worker] = worker_responses
     return question_responses
     

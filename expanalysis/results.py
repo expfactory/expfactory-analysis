@@ -5,7 +5,7 @@ results class
 '''
 
 from expanalysis.api import get_results
-from expanalysis.utils import clean_df, load_result, check_template
+from expanalysis.utils import clean_data, load_result, check_template
 import pandas
 import numpy
 import os
@@ -162,6 +162,11 @@ class Results:
         return self.data
         
     def export_data(self, filey, orig = False):
+        """ Exports data to path specified by filey. Must be .csv, .pkl or .json
+        :filey: path to export data
+        :param orig: if True export the original (uncleaned) data, if False exports
+        the current active data
+        """
         file_name,ext = os.path.splitext(filey)
         if orig:
             df = self.data_orig
@@ -282,7 +287,7 @@ def extract_experiment(results, experiment, clean = True, drop_columns = None, d
             trial_list.append(trialdata)
     df = pandas.DataFrame(trial_list)
     if clean == True:
-        df = clean_df(df, experiment, drop_columns, drop_na)
+        df = clean_data(df, experiment, drop_columns, drop_na)
     df.reset_index(inplace = True)
     return df
 

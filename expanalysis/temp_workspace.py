@@ -8,7 +8,7 @@ from expanalysis.stats import compute_contrast, compute_regression, basic_stats
 from expanalysis.experiments.jspsych import *
 
 f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
-access_token = f.read()
+access_token = f.read().strip()
 
 results = Results(access_token)
 if (len(results.get_results()) > 0):
@@ -29,15 +29,18 @@ basic_stats(results)
 #for choice
 choice_df = extract_experiment(results, 'choice_reaction_time')
 
+#for adaptive_n_back
+nback_df = extract_experiments(results, 'adaptive_n_back')
+
 #for stroop
 stroop_df = extract_experiment(results, 'stroop')
 compute_contrast(stroop_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = True)
-compute_regression(stroop_df, 'np.log(rt) ~ condition')
+compute_regression(stroop_df, 'numpy.log(rt) ~ condition')
 
 
 #for simon
 simon_df = extract_experiment(results, 'simon')
-compute_contrast(simon_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = False)
+compute_contrast(simon_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = True)
 compute_regression(simon_df, 'rt ~ condition')
 
 #for two-stage

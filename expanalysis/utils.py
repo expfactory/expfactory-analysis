@@ -66,7 +66,7 @@ def load_result(result):
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
     return df
 
-def clean_df(df, experiment = None, drop_columns = None, drop_na=True):
+def clean_data(df, experiment = None, drop_columns = None, drop_na=True):
     '''clean_df returns a pandas dataset after removing a set of default generic 
     columns. Optional variable drop_cols allows a different set of columns to be dropped
     :df: a pandas dataframe
