@@ -18,7 +18,6 @@ def basic_stats(results, columns = ['correct', 'rt'], groupby = []):
     """ Calculate 
     
     """
-    
     for experiment in results.get_experiments():
         df = extract_experiment(results, experiment)
         summary = df.describe()
