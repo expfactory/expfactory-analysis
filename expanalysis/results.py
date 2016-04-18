@@ -5,10 +5,12 @@ results class
 '''
 
 from expanalysis.api import get_results
-from expanalysis.utils import clean_data, load_result, check_template
+from expanalysis.utils import clean_data, load_result, check_template, get_data
+from expanalysis.maths import check_numeric
 import pandas
 import numpy
 import os
+import datetime
 
 class Results:
     def __init__(self, access_token = None, results_file = None, clean = True):
@@ -44,8 +46,8 @@ class Results:
             raise ValidationError('"experiment" column not found in results')
         elif 'worker' not in self.data:
             raise ValidationError('"worker" column not found in results')
-        elif 'finishtime' not in self.data:
-            raise ValidationError('"datetime" column not found in results')
+        #elif 'finishtime' not in self.data:
+         #   raise ValidationError('"finishtime" column not found in results')
         
     def results_to_df(self):
         if isinstance(self.data_orig,list):
@@ -60,12 +62,13 @@ class Results:
         if 'completed' in df.columns:
             #remove partially completed experiments
             df = df.query('completed == True') 
-            df = df.drop(['completed', 'language', 'platform', 'browser'], axis = 1)
+            df = df.drop(['completed', 'language'], axis = 1)
             df = df.dropna(subset = ['finishtime']) #redundancy check, all completed experiments should have a datetime
             #remove battery description and keywords, only keep name
             df.loc[:,'battery'] = [bat['name'] for bat in df['battery']]
             #remove everything from experiment except exp_id
             df.loc[:,'experiment'] = [exp['exp_id'] for exp in df['experiment']]
+            #if datetime is numeric (in ms), convert to datetime
             #convert datetime to string
             df['finishtime'] = df['finishtime'].astype('str')
             #replace worker dictionary with string
@@ -273,18 +276,13 @@ def extract_experiment(results, experiment, clean = True, drop_columns = None, d
         "More than one dataset found for at least one battery/experiment/worker combination"
     trial_list = []
     for i,row in df.iterrows():
-        battery = row['battery']
-        experiment = row['experiment']
-        worker = row['worker']
-        finishtime = row['finishtime']
-        exp_data = row['data']
+        exp_data = get_data(row)
         for trial in exp_data:
-            trialdata = trial['trialdata']
-            trialdata['battery'] = battery
-            trialdata['experiment'] = experiment
-            trialdata['worker'] = worker
-            trialdata['finishtime'] = finishtime
-            trial_list.append(trialdata)
+            trial['battery'] = row['battery']
+            trial['experiment'] = row['experiment']
+            trial['worker'] = row['worker']
+            trial['finishtime'] = row['finishtime']
+        trial_list += exp_data
     df = pandas.DataFrame(trial_list)
     if clean == True:
         df = clean_data(df, experiment, drop_columns, drop_na)

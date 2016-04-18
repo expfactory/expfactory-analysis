@@ -128,7 +128,7 @@ def get_drop_rows(experiment):
                 'psychological_refractory_period_two_choices': {'trial_id': gen_cols + []},
                 'recent_probes': {'trial_id': gen_cols + []},
                 'shift_task': {'trial_id': gen_cols + []},
-                'simple_reaction_time': {'trial_id': gen_cols + []},
+                'simple_reaction_time': {'trial_id': gen_cols + ['practice_intro','reset_tria','test_intro']},
                 'spatial_span': {'trial_id': gen_cols + []},
                 'stroop': {'trial_id': gen_cols + ['fixation', 'practice_intro', 'test_intro', ]}, 
                 'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
@@ -144,17 +144,47 @@ def get_drop_rows(experiment):
         print "Automatic lookup of drop rows failed: experiment not found in lookup table."
         return {}
        
-def check_template(data):
+def check_template(row):
     """Determines which template was used to create a data object
-    :data: the content of one row of a data column in a results dataframe
+    :row: tone row of a results dataframe
     """
+    try:
+        data = row['data']
+    except:
+        print 'No data column found!'
     if isinstance(data,dict):
         return 'survey'
     elif isinstance(data,list):
         return 'jspsych'
     else:
         return 'unknown'
+
+def get_data(row):
+    """Data can be stored in different forms depending on the experiment template.
+    This function returns the data in a standard form (a list of trials)
+    :data: the content of one row of the data column in a results dataframe
+    """
+    try:
+        data = row['data']
+    except:
+        print 'No data column found!'
+    if check_template(row) == 'jspsych':
+        if len(data) == 1:
+            return data[0]['trialdata']
+        elif len(data) > 1:
+           return  [trial['trialdata'] for trial in data]
+        else:
+            print "No data found"
+    elif check_template(row) == 'survey':
+        return data.values()
+    elif check_template(row) == 'unknown':
+        print "Couldn't determine data template"
+        
     
+    
+    
+
+
 def time_diff(t1, t2, output = 'hour'):
     '''Returns time elapsed between two time points. Specify output format as 
     "min", "hour", or "day"

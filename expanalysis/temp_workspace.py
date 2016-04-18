@@ -16,6 +16,12 @@ if (len(results.get_results()) > 0):
     results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
 results.filter(battery = 'Self Regulation Pilot')
 
+# worker with complete dataset saved in new way
+worker_complete = 'A07375212LC8D25XBGZ1J'
+results.filter(worker = worker_complete)
+
+
+
 calc_time_taken(results)
 time_taken=print_time(results)
 time_taken.hist(bins = 20)
@@ -45,6 +51,4 @@ compute_regression(simon_df, 'rt ~ condition')
 
 #for two-stage
 two_stage_df = extract_experiment(results,'two_stage_decision', clean = True)
-
-
 

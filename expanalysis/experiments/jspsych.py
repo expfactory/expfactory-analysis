@@ -4,41 +4,46 @@ jspsych functions
 
 '''
 from expanalysis.results import select_worker, extract_experiment
-from expanalysis.utils import check_template
+from expanalysis.utils import check_template, get_data
 import numpy
 
 def calc_time_taken(results):
     '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
     '''
-    data = results.get_results()
+    results = results.get_results()
     instruction_lengths = []
     exp_lengths = []
-    for i,row in data.iterrows():
-        if check_template(row['data']) == 'jspsych':
+    for i,row in results.iterrows():
+        if check_template(row) == 'jspsych':
+            data = get_data(row)
             #ensure there is a time elapsed variable
-            assert 'time_elapsed' in row['data'][-1]['trialdata'].keys(), \
+            assert 'time_elapsed' in data[-1].keys(), \
                 '"time_elapsed" not found for at least one dataset in these results'
             #sum time taken on instruction trials
-            instruction_length = numpy.sum([trial['trialdata']['time_elapsed'] for trial in row['data'] if reduce_word(trial['trialdata'].get('trial_id')) == 'instruction'])        
+            instruction_length = numpy.sum([trial['time_elapsed'] for trial in data if reduce_word(trial.get('trial_id')) == 'instruction'])        
             #Set the length of the experiment to the time elapsed on the last 
             #jsPsych trial
-            experiment_length = row['data'][-1]['trialdata']['time_elapsed']
+            experiment_length = data[-1]['time_elapsed']
             instruction_lengths.append(instruction_length/1000.0)
             exp_lengths.append(experiment_length/1000.0)
         else:
             instruction_lengths.append(numpy.nan)
             exp_lengths.append(numpy.nan)
-    data['total_time'] = exp_lengths
-    data['instruct_time'] = instruction_lengths
-    data['ontask_time'] = data['total_time'] - data['instruct_time']
+    results['total_time'] = exp_lengths
+    results['instruct_time'] = instruction_lengths
+    results['ontask_time'] = results['total_time'] - results['instruct_time']
         
 def print_time(results, time_col = 'ontask_time'):
     '''Prints time taken for each experiment in minutes
     :param time_col: Dataframe column of time in seconds
     '''
-    assert time_col in results.get_results(), \
+    df = results.get_results()
+    
+    assert time_col in df, \
         '"%s" has not been calculated yet. Use calc_time_taken method' % (time_col)
-    time = (results.get_results().groupby('experiment')[time_col].mean()/60.0).round(2)
+    #drop rows where time can't be calculated
+    df.dropna(subset = [time_col], inplace = True)
+    time = (df.groupby('experiment')[time_col].mean()/60.0).round(2)
     print(time)
     return time
 
