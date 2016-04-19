@@ -16,22 +16,22 @@ results = Results(access_token)
 if (len(results.get_results()) > 0):
     results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
     results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
-    
+
 #Filter results
-# worker with complete dataset saved in new way
 results.filter(battery = 'Self Regulation Pilot')
+#How many tasks has each worker done?
+results.get_results().groupby('worker').count()
+# worker with complete dataset saved in correct way
 worker_complete = 'A07375212LC8D25XBGZ1J'
-results.filter(worker = worker_complete)
-
-
-
+results.filter(worker = worker_complete, reset = True)
+#Add time to each experiment
 calc_time_taken(results)
 time_taken=print_time(results)
 time_taken.hist(bins = 20)
-results.get_results().groupby('worker').count()
+
 
 results.filter(experiment = ['stroop','choice_reaction_time'])
-basic_stats(results)
+basic_stats(results, silent = True)
 
 
 

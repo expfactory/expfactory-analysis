@@ -4,7 +4,7 @@ jspsych functions
 
 '''
 from expanalysis.results import select_worker, extract_experiment
-from expanalysis.utils import check_template, get_data
+from expanalysis.utils import check_template, get_data, lookup_word
 import numpy
 
 def calc_time_taken(results):
@@ -20,7 +20,7 @@ def calc_time_taken(results):
             assert 'time_elapsed' in data[-1].keys(), \
                 '"time_elapsed" not found for at least one dataset in these results'
             #sum time taken on instruction trials
-            instruction_length = numpy.sum([trial['time_elapsed'] for trial in data if reduce_word(trial.get('trial_id')) == 'instruction'])        
+            instruction_length = numpy.sum([trial['time_elapsed'] for trial in data if lookup_word(trial.get('trial_id')) == 'instruction'])        
             #Set the length of the experiment to the time elapsed on the last 
             #jsPsych trial
             experiment_length = data[-1]['time_elapsed']
@@ -42,7 +42,7 @@ def print_time(results, time_col = 'ontask_time'):
     assert time_col in df, \
         '"%s" has not been calculated yet. Use calc_time_taken method' % (time_col)
     #drop rows where time can't be calculated
-    df.dropna(subset = [time_col], inplace = True)
+    df = df.dropna(subset = [time_col])
     time = (df.groupby('experiment')[time_col].mean()/60.0).round(2)
     print(time)
     return time
@@ -76,19 +76,7 @@ def get_post_task_responses(results):
         question_responses[worker] = worker_responses
     return question_responses
     
-def reduce_word(word):
-    """function that modifies a string so that it conforms to expfactory analysis
-    """
-    if isinstance(word,(str,unicode)):
-        word = word.strip().lower()
-        word = word.replace(" ", "_")
-        #define synonyms
-        if word in ['rt', 'reaction time']:
-            word = 'rt'
-        if word in ['instruction', 'instructions']:
-            word = 'instruction'
-        return word
-    
+
     
     
     

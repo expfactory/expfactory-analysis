@@ -14,11 +14,14 @@ import pandas
 import numpy
 import hddm
 
-def basic_stats(results, columns = ['correct', 'rt'], groupby = []):
+def basic_stats(results, columns = ['correct', 'rt'], groupby = [], silent = False):
     """ Calculate 
     
     """
     for experiment in results.get_experiments():
+        print '*********************'
+        print experiment
+        print '*********************'
         df = extract_experiment(results, experiment)
         summary = df.describe()
         if not set(columns).issubset(df.columns):
@@ -31,7 +34,10 @@ def basic_stats(results, columns = ['correct', 'rt'], groupby = []):
                 summary = df.groupby(groupby)[columns].describe()
                 summary.query('level_1 in ["mean", "std"]', inplace = True)
                 print(summary)
-    return summary
+        print('\n')
+        raw_input("Press Enter to continue...")
+    if not silent:
+        return summary
 
 def EZ_diffusion(df):
     assert 'correct' in df.columns, 'Could not calculate EZ DDM'

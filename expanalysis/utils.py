@@ -66,7 +66,7 @@ def load_result(result):
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
     return df
 
-def clean_data(df, experiment = None, drop_columns = None, drop_na=True):
+def clean_data(df, experiment = None, drop_columns = None, drop_na=True, replace_correct = True):
     '''clean_df returns a pandas dataset after removing a set of default generic 
     columns. Optional variable drop_cols allows a different set of columns to be dropped
     :df: a pandas dataframe
@@ -81,16 +81,19 @@ def clean_data(df, experiment = None, drop_columns = None, drop_na=True):
         assert sum(df['experiment'] == experiment) == len(df), \
             "An experiment was specified, but the dataframe has other experiments!"      
         drop_rows = get_drop_rows(experiment)
-    # Drop unnecessary rows, all null rows
-    for key in drop_rows.keys():
-        df = df.query('%s not in  %s' % (key, drop_rows[key]))
+        # Drop unnecessary rows, all null rows
+        for key in drop_rows.keys():
+            df = df.query('%s not in  %s' % (key, drop_rows[key]))
     if drop_na == True:
         df = df.dropna(how = 'all')
     #calculate correct responses if they haven't been calculated
-    if set(['key_press', 'correct_response']).issubset(df.columns):
+    if set(['key_press', 'correct_response']).issubset(df.columns) and replace_correct == True:
         if 'correct' in df.columns:
-            print('Dataframe had a "Correct" column that has been overwritten!')
+            print 'Replacing a "correct" column!'
         df['correct'] = df['key_press'] == df['correct_response'] 
+    if 'correct' in df.columns:
+        df['correct'] = df['correct'].map(lookup_word)
+        df['correct'] = df['correct'].astype(float)
     #convert all boolean columns to integer
     for column in df.select_dtypes(include = ['bool']).columns:
         df[column] = df[column].astype('int')
@@ -130,6 +133,8 @@ def get_drop_rows(experiment):
                 'shift_task': {'trial_id': gen_cols + []},
                 'simple_reaction_time': {'trial_id': gen_cols + ['practice_intro','reset_tria','test_intro']},
                 'spatial_span': {'trial_id': gen_cols + []},
+                'stim_selective_stop_signal': {'trial_id': gen_cols + []},
+                'stop_signal': {'trial_id': gen_cols + []},
                 'stroop': {'trial_id': gen_cols + ['fixation', 'practice_intro', 'test_intro', ]}, 
                 'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
                 'threebytwo': {'trial_id': gen_cols + []},
@@ -181,7 +186,24 @@ def get_data(row):
         print "Couldn't determine data template"
         
     
-    
+def lookup_word(word):
+    """function that modifies a string so that it conforms to expfactory analysis by 
+    replacing it with a interpretable synonym
+    :word: word to lookup
+    """
+    if isinstance(word,(str,unicode)):
+        word = word.strip().lower()
+        word = word.replace(" ", "_")
+        #define synonyms
+        lookup = {
+        'reaction time': 'rt',
+        'instructions': 'instruction',
+        'correct': True,
+        'incorrect': False}
+        return lookup.get(word,word)
+    else:
+        return word
+     
     
 
 
