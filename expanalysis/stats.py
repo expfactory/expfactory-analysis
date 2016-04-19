@@ -35,7 +35,9 @@ def basic_stats(results, columns = ['correct', 'rt'], groupby = [], silent = Fal
                 summary.query('level_1 in ["mean", "std"]', inplace = True)
                 print(summary)
         print('\n')
-        raw_input("Press Enter to continue...")
+        input_text = raw_input("Press Enter to continue...")
+        if input_text == 'exit':
+            break
     if not silent:
         return summary
 

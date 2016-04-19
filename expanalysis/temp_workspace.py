@@ -7,15 +7,20 @@ from expanalysis.results import Results, extract_experiment
 from expanalysis.stats import compute_contrast, compute_regression, basic_stats
 from expanalysis.experiments.jspsych import *
 
-#Load Results
-f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
-access_token = f.read().strip()
-results = Results(access_token)
+##Load Results from Database
+#f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
+#access_token = f.read().strip()
+#results = Results(access_token)
+#
+##Keep a local copy saved each time
+#if (len(results.get_results()) > 0):
+#    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
+#    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
+#
 
-#Keep a local copy saved each time
-if (len(results.get_results()) > 0):
-    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
-    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
+#Lad results from File
+results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json')
+
 
 #Filter results
 results.filter(battery = 'Self Regulation Pilot')
