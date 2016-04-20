@@ -7,7 +7,7 @@ import requests
 import __init__
 import pandas
 import os
-
+import unicodedata
 
 def get_installdir():
     return os.path.dirname(os.path.abspath(__init__.__file__))
@@ -66,12 +66,13 @@ def load_result(result):
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
     return df
 
-def clean_data(df, experiment = None, drop_columns = None, drop_na=True, replace_correct = True):
+def clean_data(df, experiment = None, drop_columns = None, drop_na=True, lookup = True, replace_correct = True):
     '''clean_df returns a pandas dataset after removing a set of default generic 
     columns. Optional variable drop_cols allows a different set of columns to be dropped
     :df: a pandas dataframe
     :param experiment: a string identifying the experiment used to automatically drop unnecessary columns. df should not have multiple experiments if this flag is set!
     :param drop_columns: a list of columns to drop. If not specified, a default list will be used from utils.get_dropped_columns()
+    :param lookup: bool, default true. If True replaces all values in dataframe using the lookup_val function
     '''
     # Drop unnecessary columns
     if drop_columns == None:
@@ -86,14 +87,16 @@ def clean_data(df, experiment = None, drop_columns = None, drop_na=True, replace
             df = df.query('%s not in  %s' % (key, drop_rows[key]))
     if drop_na == True:
         df = df.dropna(how = 'all')
+    if lookup == True:
+        #convert vals based on lookup
+        for col in df.columns:
+            df[col] = df[col].map(lookup_val)
     #calculate correct responses if they haven't been calculated
-    if set(['key_press', 'correct_response']).issubset(df.columns) and replace_correct == True:
+    if 'correct_response' in df.columns and replace_correct == True:
         if 'correct' in df.columns:
             print 'Replacing a "correct" column!'
-        df['correct'] = df['key_press'] == df['correct_response'] 
-    if 'correct' in df.columns:
-        df['correct'] = df['correct'].map(lookup_word)
-        df['correct'] = df['correct'].astype(float)
+        response_cols = list(set(['key_press','clicked_on']).intersection(df.columns))
+        df['correct'] =  [float(trial['correct_response'] in list(trial[response_cols])) if not pandas.isnull(trial['correct_response']) else numpy.nan for i, trial in df.iterrows()]
     #convert all boolean columns to integer
     for column in df.select_dtypes(include = ['bool']).columns:
         df[column] = df[column].astype('int')
@@ -108,21 +111,21 @@ def get_drop_rows(experiment):
     '''Function used by clean_df to drop rows from dataframes with one experiment
     :experiment: experiment key used to look up which rows to drop from a dataframe
     '''
-    gen_cols = ['welcome', 'instruction', 'instruction', 'attention_check','end', 'post task questions'] #generic_columns to drop
+    gen_cols = ['welcome', 'instruction', 'attention_check','end', 'post task questions', 'fixation'] #generic_columns to drop
     lookup = {'adaptive_n_back': {'trial_id': gen_cols + []},
                 'angling_risk_task_always_sunny': {'trial_id': gen_cols + []}, 
-                'attention_network_task': {'trial_id': gen_cols + []}, 
+                'attention_network_task': {'trial_id': gen_cols + ['spatialcue', 'centercue', 'doublecue', 'nocue', 'restblock']}, 
                 'bickel_titrator': {'trial_id': gen_cols + []}, 
-                'choice_reaction_time': {'trial_id': gen_cols + ['practice_intro', 'reset_trial']}, 
-                'columbia_card_task_cold': {'trial_id': gen_cols + []}, 
-                'columbia_card_task_hot': {'trial_id': gen_cols + []}, 
+                'choice_reaction_time': {'trial_id': gen_cols + ['practice_intro', 'reset trial']}, 
+                'columbia_card_task_cold': {'trial_id': gen_cols + ['calculate_reward','reward','end_instructions']}, 
+                'columbia_card_task_hot': {'trial_id': gen_cols + ['calculate_reward', 'reward', 'test_intro']}, 
                 'dietary_decision': {'trial_id': gen_cols + []}, 
                 'digit_span': {'trial_id': gen_cols + []},
-                'directed_forgetting': {'trial_id': gen_cols + []},
+                'directed_forgetting': {'trial_id': gen_cols + ['ITI_fixation', 'intro_test']},
                 'dot_pattern_expectancy': {'trial_id': gen_cols + []},
                 'go_nogo': {'trial_id': gen_cols + []},
-                'hierarchical_rule': {'trial_id': gen_cols + []},
-                'information_sampling_task': {'trial_id': gen_cols + []},
+                'hierarchical_rule': {'trial_id': gen_cols + ['feedback']},
+                'information_sampling_task': {'trial_id': gen_cols + ['test_intro', 'DW_intro', 'reset_round']},
                 'keep_track': {'trial_id': gen_cols + []},
                 'kirby': {'trial_id': gen_cols + []},
                 'local_global_letter': {'trial_id': gen_cols + []},
@@ -135,7 +138,7 @@ def get_drop_rows(experiment):
                 'spatial_span': {'trial_id': gen_cols + []},
                 'stim_selective_stop_signal': {'trial_id': gen_cols + []},
                 'stop_signal': {'trial_id': gen_cols + []},
-                'stroop': {'trial_id': gen_cols + ['fixation', 'practice_intro', 'test_intro', ]}, 
+                'stroop': {'trial_id': gen_cols + ['practice_intro', 'test_intro', ]}, 
                 'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
                 'threebytwo': {'trial_id': gen_cols + []},
                 'tower_of_london': {'trial_id': gen_cols + []},
@@ -186,23 +189,26 @@ def get_data(row):
         print "Couldn't determine data template"
         
     
-def lookup_word(word):
+def lookup_val(val):
     """function that modifies a string so that it conforms to expfactory analysis by 
-    replacing it with a interpretable synonym
-    :word: word to lookup
+    replacing it with an interpretable synonym
+    :val: val to lookup
     """
-    if isinstance(word,(str,unicode)):
-        word = word.strip().lower()
-        word = word.replace(" ", "_")
+    if isinstance(val,(str,unicode)):
+        #convert unicode to str
+        if isinstance(val, unicode):
+            val = unicodedata.normalize('NFKD', val).encode('ascii', 'ignore')
+        val = val.strip().lower()
+        val = val.replace(" ", "_")
         #define synonyms
         lookup = {
         'reaction time': 'rt',
         'instructions': 'instruction',
-        'correct': True,
-        'incorrect': False}
-        return lookup.get(word,word)
+        'correct': 1,
+        'incorrect': 0}
+        return lookup.get(val,val)
     else:
-        return word
+        return val
      
     
 

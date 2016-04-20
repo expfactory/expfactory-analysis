@@ -6,6 +6,10 @@ Temporary file for testing analysis
 from expanalysis.results import Results, extract_experiment
 from expanalysis.stats import compute_contrast, compute_regression, basic_stats
 from expanalysis.experiments.jspsych import *
+from expanalysis.utils import get_data
+import pandas
+
+pandas.set_option('display.width', 200)
 
 ##Load Results from Database
 #f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
@@ -35,16 +39,31 @@ time_taken=print_time(results)
 time_taken.hist(bins = 20)
 
 
-results.filter(experiment = ['stroop','choice_reaction_time'])
 basic_stats(results, silent = True)
 
+#for adaptive_n_back
+nback_df = extract_experiments(results, 'adaptive_n_back')
 
+#for ant
+ant_df = extract_experiment(results, 'attention_network_task')
 
 #for choice
 choice_df = extract_experiment(results, 'choice_reaction_time')
 
-#for adaptive_n_back
-nback_df = extract_experiments(results, 'adaptive_n_back')
+#for CCTC
+CCTC_df = extract_experiment(results, 'columbia_card_task_cold')
+
+#for CCTH
+CCTH_df = extract_experiment(results, 'columbia_card_task_hot')
+
+#for forget
+forget_df = extract_experiment(results, 'directed_forgetting')
+
+#for hierarchical
+hierarchical_df = extract_experiment(results, 'hierarchical_rule')
+
+#for ISI
+ISI_df = extract_experiment(results, 'information_sampling_task', clean = False)
 
 #for stroop
 stroop_df = extract_experiment(results, 'stroop')
