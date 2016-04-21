@@ -106,7 +106,7 @@ def clean_data(df, experiment = None, drop_columns = None, drop_na=True, lookup 
 
 def get_drop_columns():
     return ['view_history', 'stimulus', 'trial_index', 'internal_node_id', 
-           'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial']
+           'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial', 'exp_id']
            
 def get_drop_rows(experiment):
     '''Function used by clean_df to drop rows from dataframes with one experiment
@@ -115,13 +115,13 @@ def get_drop_rows(experiment):
     gen_cols = ['welcome', 'text','instruction', 'attention_check','end', 'post task questions', 'fixation'] #generic_columns to drop
     lookup = {'adaptive_n_back': {'trial_id': gen_cols + ['update_target', 'update_delay', 'delay_text']},
                 'angling_risk_task_always_sunny': {'trial_id': gen_cols + ['test_intro','intro','ask_fish','set_fish']}, 
-                'attention_network_task': {'trial_id': gen_cols + ['spatialcue', 'centercue', 'doublecue', 'nocue', 'restblock']}, 
+                'attention_network_task': {'trial_id': gen_cols + ['spatialcue', 'centercue', 'doublecue', 'nocue', 'rest block', 'intro']}, 
                 'bickel_titrator': {'trial_id': gen_cols + ['update_delay', 'update_mag', 'gap']}, 
                 'choice_reaction_time': {'trial_id': gen_cols + ['practice_intro', 'reset trial']}, 
                 'columbia_card_task_cold': {'trial_id': gen_cols + ['calculate_reward','reward','end_instructions']}, 
                 'columbia_card_task_hot': {'trial_id': gen_cols + ['calculate_reward', 'reward', 'test_intro']}, 
                 'dietary_decision': {'trial_id': gen_cols + ['start_taste', 'start_health']}, 
-                'digit_span': {'trial_id': gen_cols + ['test_intro', 'start_reverse']},
+                'digit_span': {'trial_id': gen_cols + ['test_intro', 'start_reverse', 'stim', 'feedback']},
                 'directed_forgetting': {'trial_id': gen_cols + ['ITI_fixation', 'intro_test', 'test_intro']},
                 'dot_pattern_expectancy': {'trial_id': gen_cols + ['rest', 'cue', 'feedback']},
                 'go_nogo': {'trial_id': gen_cols + ['reset_trial','test_block','test_intro']},
@@ -136,14 +136,14 @@ def get_drop_rows(experiment):
                 'recent_probes': {'trial_id': gen_cols + ['intro_test', 'test_intro', 'iti_fixation']},
                 'shift_task': {'trial_id': gen_cols + []},
                 'simple_reaction_time': {'trial_id': gen_cols + ['practice_intro','reset_trial','test_intro']},
-                'spatial_span': {'trial_id': gen_cols + ['test_intro', 'start_reverse_intro']},
+                'spatial_span': {'trial_id': gen_cols + ['test_intro', 'start_reverse_intro', 'stim', 'feedback']},
                 'stim_selective_stop_signal': {'trial_id': gen_cols + []},
                 'stop_signal': {'trial_id': gen_cols + ['reset']},
                 'stroop': {'trial_id': gen_cols + ['practice_intro', 'test_intro', ]}, 
                 'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
                 'threebytwo': {'trial_id': gen_cols + ['cue','practice_intro', 'gap', 'test_intro', 'set_stims']},
                 'tower_of_london': {'trial_id': gen_cols + []},
-                'two_stage_decision': {'trial_id': gen_cols + ['practice_intro', 'test_intro', 'wait']},
+                'two_stage_decision': {'trial_id': gen_cols + ['practice_intro', 'test_intro', 'wait', 'first_stage_selected', 'second_stage_selected', 'wait_update_fb']},
                 'willingness_to_wait': {'trial_id': gen_cols + ['practice_intro', 'test_intro']},
                 'writing_task': {}}    
                 

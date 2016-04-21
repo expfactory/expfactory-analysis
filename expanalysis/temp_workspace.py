@@ -8,6 +8,7 @@ from expanalysis.stats import compute_contrast, compute_regression, basic_stats
 from expanalysis.experiments.jspsych import *
 from expanalysis.utils import get_data
 import pandas
+import seaborn as sns
 
 pandas.set_option('display.width', 200)
 
@@ -74,6 +75,10 @@ shift_df = extract_experiment(results, 'shift_task')
 #for simon
 simon_df = extract_experiment(results, 'simon')
 
+#for span
+digit_df = extract_experiment(results, 'digit_span')
+spatial_df = extract_experiment(results, 'spatial_span')
+
 #for stop
 stop_df = extract_experiment(results, 'stop_signal')
 
@@ -81,10 +86,13 @@ stop_df = extract_experiment(results, 'stop_signal')
 #for stroop
 stroop_df = extract_experiment(results, 'stroop')
 
-#for stroop
+#for threebytwo
 three_df = extract_experiment(results, 'threebytwo')
 
-
+#for two stage
+two_df = extract_experiment(results, 'two_stage_decision')
+reward_probs = [x for x in two_df['FB_probs'] if type(x) == list]
+sns.plt.plot(reward_probs)
 
 
 compute_contrast(stroop_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = True)

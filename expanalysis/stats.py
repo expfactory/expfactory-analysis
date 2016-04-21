@@ -23,18 +23,27 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
         print experiment
         print '*********************'
         groupby = get_groupby(experiment)
+        exp_columns = []
         df = extract_experiment(results, experiment)
         if remove_practice and 'exp_stage' in df.columns:
             df = df.query('exp_stage != "practice"')
         summary = df.describe()
         if not set(columns).issubset(df.columns):
             print "Columns selected were not in the dataframe. Printing generic info"
-            print summary
         else:
-            if len(groupby) != 0:
-                summary = df.groupby(groupby).describe()
-            summary = summary[columns]
-            print(summary)
+            exp_columns += columns
+        if len(groupby) != 0:
+            summary = df.groupby(groupby).describe()
+            summary.reset_index(inplace = True)
+            #reorder columns
+            stats_level = 'level_%s' % len(groupby)
+            summary.insert(0, 'Stats', summary[stats_level])
+            summary.drop(stats_level, axis = 1, inplace = True)
+            summary = summary.query("Stats in ['mean','std','min','max','50%']")
+            exp_columns = ['Stats'] + groupby + exp_columns
+        if len(exp_columns) > 0:
+            summary = summary[exp_columns]
+        print(summary)
         print('\n')
         input_text = raw_input("Press Enter to continue...")
         if input_text == 'exit':
@@ -48,13 +57,13 @@ def get_groupby(experiment):
     '''
     lookup = {'adaptive_n_back': ['load'],
                 'angling_risk_task_always_sunny': [], 
-                'attention_network_task': [], 
+                'attention_network_task': ['cue','flanker_type'], 
                 'bickel_titrator': [], 
                 'choice_reaction_time': [], 
                 'columbia_card_task_cold': [], 
                 'columbia_card_task_hot': [], 
                 'dietary_decision': [], 
-                'digit_span': [],
+                'digit_span': ['condition'],
                 'directed_forgetting': [],
                 'dot_pattern_expectancy': [],
                 'go_nogo': [],
@@ -69,7 +78,7 @@ def get_groupby(experiment):
                 'recent_probes': [],
                 'shift_task': [],
                 'simple_reaction_time': [],
-                'spatial_span': [],
+                'spatial_span': ['condition'],
                 'stim_selective_stop_signal': [],
                 'stop_signal': [],
                 'stroop': ['condition'], 

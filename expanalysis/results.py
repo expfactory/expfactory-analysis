@@ -183,6 +183,23 @@ class Results:
             df.to_json(filey)
         else:
             print "File extension not recognized, must be .csv, .pkl, or .json." 
+    
+    def export_experiment(self, filey, experiment, clean = True):
+        """ Exports data from one experiment to path specified by filey. Must be .csv, .pkl or .json
+        :filey: path to export data
+        :experiment: experiment to export
+        :param clean: boolean, default True. If true cleans the experiment df before export
+        """
+        df = extract_experiment(self, experiment, clean)
+        file_name,ext = os.path.splitext(filey)
+        if ext.lower() == ".csv":
+            df.to_csv(filey)
+        elif ext.lower() == ".pkl":
+            df.to_pickle(filey)
+        elif ext.lower() == ".json":
+            df.to_json(filey)
+        else:
+            print "File extension not recognized, must be .csv, .pkl, or .json." 
 
 def select_battery(results, battery):
     '''Selects a battery (or batteries) from results object and sorts based on worker and time of experiment completion
@@ -288,5 +305,6 @@ def extract_experiment(results, experiment, clean = True, drop_columns = None, d
         df = clean_data(df, experiment, drop_columns, drop_na)
     df.reset_index(inplace = True)
     return df
+
 
     
