@@ -14,7 +14,7 @@ import pandas
 import numpy
 import hddm
 
-def basic_stats(results, columns = ['correct', 'rt'], groupby = [], silent = False):
+def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, use_groups = True,  silent = False):
     """ Calculate 
     
     """
@@ -22,18 +22,19 @@ def basic_stats(results, columns = ['correct', 'rt'], groupby = [], silent = Fal
         print '*********************'
         print experiment
         print '*********************'
+        groupby = get_groupby(experiment)
         df = extract_experiment(results, experiment)
+        if remove_practice and 'exp_stage' in df.columns:
+            df = df.query('exp_stage != "practice"')
         summary = df.describe()
         if not set(columns).issubset(df.columns):
             print "Columns selected were not in the dataframe. Printing generic info"
             print summary
         else:
-            summary = summary[columns].loc[['mean','std']]
-            print(summary)
             if len(groupby) != 0:
-                summary = df.groupby(groupby)[columns].describe()
-                summary.query('level_1 in ["mean", "std"]', inplace = True)
-                print(summary)
+                summary = df.groupby(groupby).describe()
+            summary = summary[columns]
+            print(summary)
         print('\n')
         input_text = raw_input("Press Enter to continue...")
         if input_text == 'exit':
@@ -41,6 +42,50 @@ def basic_stats(results, columns = ['correct', 'rt'], groupby = [], silent = Fal
     if not silent:
         return summary
 
+def get_groupby(experiment):
+    '''Function used by basic_stats to group data ouptut
+    :experiment: experiment key used to look up appropriate grouping variables
+    '''
+    lookup = {'adaptive_n_back': ['load'],
+                'angling_risk_task_always_sunny': [], 
+                'attention_network_task': [], 
+                'bickel_titrator': [], 
+                'choice_reaction_time': [], 
+                'columbia_card_task_cold': [], 
+                'columbia_card_task_hot': [], 
+                'dietary_decision': [], 
+                'digit_span': [],
+                'directed_forgetting': [],
+                'dot_pattern_expectancy': [],
+                'go_nogo': [],
+                'hierarchical_rule': [],
+                'information_sampling_task': [],
+                'keep_track': [],
+                'kirby': [],
+                'local_global_letter': [],
+                'motor_selective_stop_signal': [],
+                'probabilistic_selection': [],
+                'psychological_refractory_period_two_choices': [],
+                'recent_probes': [],
+                'shift_task': [],
+                'simple_reaction_time': [],
+                'spatial_span': [],
+                'stim_selective_stop_signal': [],
+                'stop_signal': [],
+                'stroop': ['condition'], 
+                'simon':['condition'], 
+                'threebytwo': ['task_switch', 'cue_switch'],
+                'tower_of_london': [],
+                'two_stage_decision': [],
+                'willingness_to_wait': [],
+                'writing_task': []} 
+                
+    try:
+        return lookup[experiment]
+    except KeyError:
+        print "Automatic lookup of groups failed: experiment not found in lookup table."
+        return {}
+    
 def EZ_diffusion(df):
     assert 'correct' in df.columns, 'Could not calculate EZ DDM'
     pc = df['correct'].mean()

@@ -42,7 +42,7 @@ time_taken.hist(bins = 20)
 basic_stats(results, silent = True)
 
 #for adaptive_n_back
-nback_df = extract_experiments(results, 'adaptive_n_back')
+nback_df = extract_experiment(results, 'adaptive_n_back')
 
 #for ant
 ant_df = extract_experiment(results, 'attention_network_task')
@@ -56,6 +56,9 @@ CCTC_df = extract_experiment(results, 'columbia_card_task_cold')
 #for CCTH
 CCTH_df = extract_experiment(results, 'columbia_card_task_hot')
 
+#for dpx
+dpx_df = extract_experiment(results,'dot_pattern_expectancy')
+
 #for forget
 forget_df = extract_experiment(results, 'directed_forgetting')
 
@@ -63,10 +66,27 @@ forget_df = extract_experiment(results, 'directed_forgetting')
 hierarchical_df = extract_experiment(results, 'hierarchical_rule')
 
 #for ISI
-ISI_df = extract_experiment(results, 'information_sampling_task', clean = False)
+ISI_df = extract_experiment(results, 'information_sampling_task')
+
+#for simon
+shift_df = extract_experiment(results, 'shift_task')
+
+#for simon
+simon_df = extract_experiment(results, 'simon')
+
+#for stop
+stop_df = extract_experiment(results, 'stop_signal')
+
 
 #for stroop
 stroop_df = extract_experiment(results, 'stroop')
+
+#for stroop
+three_df = extract_experiment(results, 'threebytwo')
+
+
+
+
 compute_contrast(stroop_df, ind_var = 'condition', dep_var = 'rt', drop_rows = {'rt': -1}, plot = True)
 compute_regression(stroop_df, 'numpy.log(rt) ~ condition')
 
@@ -78,4 +98,10 @@ compute_regression(simon_df, 'rt ~ condition')
 
 #for two-stage
 two_stage_df = extract_experiment(results,'two_stage_decision', clean = True)
+
+for i in xrange(40,64):
+    data = extract_experiment(results,results.get_experiments()[i])
+    if 'trial_id' in data.columns:
+        print('**************************')
+        print numpy.unique(data[['trial_id','exp_id']])
 
