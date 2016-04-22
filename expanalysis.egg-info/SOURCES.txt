@@ -2,6 +2,7 @@ MANIFEST.in
 expanalysis/__init__.py
 expanalysis/api.py
 expanalysis/maths.py
+expanalysis/processing.py
 expanalysis/results.py
 expanalysis/stats.py
 expanalysis/temp_workspace.py
@@ -16,6 +17,8 @@ expanalysis/experiments/__init__.py
 expanalysis/experiments/__init__.pyc
 expanalysis/experiments/jspsych.py
 expanalysis/experiments/jspsych.pyc
+expanalysis/experiments/jspsych_processing.py
+expanalysis/experiments/jspsych_processing.pyc
 expanalysis/experiments/stroop/stroop_condition_vs_reactiontime.ipynb
 expanalysis/experiments/stroop/stroop_condition_vs_reactiontime.py
 expanalysis/experiments/stroop/stroop_results.csv

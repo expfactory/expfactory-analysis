@@ -1,14 +1,15 @@
 """
-
+analysis/utils.py: part of expfactory package
 functions for working with experiment factory results
 
 """
+
 import requests
 import __init__
 import pandas
-import numpy
 import os
 import unicodedata
+import re
 
 def get_installdir():
     return os.path.dirname(os.path.abspath(__init__.__file__))
@@ -66,93 +67,7 @@ def load_result(result):
         else:
             print "File extension not recognized, must be .csv (JsPsych single experiment export) or tsv (expfactory-docker) export." 
     return df
-
-def clean_data(df, experiment = None, drop_columns = None, drop_na=True, lookup = True, replace_correct = True):
-    '''clean_df returns a pandas dataset after removing a set of default generic 
-    columns. Optional variable drop_cols allows a different set of columns to be dropped
-    :df: a pandas dataframe
-    :param experiment: a string identifying the experiment used to automatically drop unnecessary columns. df should not have multiple experiments if this flag is set!
-    :param drop_columns: a list of columns to drop. If not specified, a default list will be used from utils.get_dropped_columns()
-    :param lookup: bool, default true. If True replaces all values in dataframe using the lookup_val function
-    '''
-    # Drop unnecessary columns
-    if drop_columns == None:
-        drop_columns = get_drop_columns()   
-    df.drop(drop_columns, axis=1, inplace=True, errors='ignore')
-    if experiment != None:
-        assert sum(df['experiment'] == experiment) == len(df), \
-            "An experiment was specified, but the dataframe has other experiments!"      
-        drop_rows = get_drop_rows(experiment)
-        # Drop unnecessary rows, all null rows
-        for key in drop_rows.keys():
-            df = df.query('%s not in  %s' % (key, drop_rows[key]))
-    if drop_na == True:
-        df = df.dropna(how = 'all')
-    if lookup == True:
-        #convert vals based on lookup
-        for col in df.columns:
-            df[col] = df[col].map(lookup_val)
-    #calculate correct responses if they haven't been calculated
-    if 'correct_response' in df.columns and replace_correct == True:
-        if 'correct' in df.columns:
-            print 'Replacing a "correct" column!'
-        response_cols = list(set(['key_press','clicked_on']).intersection(df.columns))
-        df['correct'] =  [float(trial['correct_response'] in list(trial[response_cols])) if not pandas.isnull(trial['correct_response']) else numpy.nan for i, trial in df.iterrows()]
-    #convert all boolean columns to integer
-    for column in df.select_dtypes(include = ['bool']).columns:
-        df[column] = df[column].astype('int')
-    return df
-
-
-def get_drop_columns():
-    return ['view_history', 'stimulus', 'trial_index', 'internal_node_id', 
-           'stim_duration', 'block_duration', 'feedback_duration','timing_post_trial', 'exp_id']
-           
-def get_drop_rows(experiment):
-    '''Function used by clean_df to drop rows from dataframes with one experiment
-    :experiment: experiment key used to look up which rows to drop from a dataframe
-    '''
-    gen_cols = ['welcome', 'text','instruction', 'attention_check','end', 'post task questions', 'fixation'] #generic_columns to drop
-    lookup = {'adaptive_n_back': {'trial_id': gen_cols + ['update_target', 'update_delay', 'delay_text']},
-                'angling_risk_task_always_sunny': {'trial_id': gen_cols + ['test_intro','intro','ask_fish','set_fish']}, 
-                'attention_network_task': {'trial_id': gen_cols + ['spatialcue', 'centercue', 'doublecue', 'nocue', 'rest block', 'intro']}, 
-                'bickel_titrator': {'trial_id': gen_cols + ['update_delay', 'update_mag', 'gap']}, 
-                'choice_reaction_time': {'trial_id': gen_cols + ['practice_intro', 'reset trial']}, 
-                'columbia_card_task_cold': {'trial_id': gen_cols + ['calculate_reward','reward','end_instructions']}, 
-                'columbia_card_task_hot': {'trial_id': gen_cols + ['calculate_reward', 'reward', 'test_intro']}, 
-                'dietary_decision': {'trial_id': gen_cols + ['start_taste', 'start_health']}, 
-                'digit_span': {'trial_id': gen_cols + ['test_intro', 'start_reverse', 'stim', 'feedback']},
-                'directed_forgetting': {'trial_id': gen_cols + ['ITI_fixation', 'intro_test', 'test_intro']},
-                'dot_pattern_expectancy': {'trial_id': gen_cols + ['rest', 'cue', 'feedback']},
-                'go_nogo': {'trial_id': gen_cols + ['reset_trial','test_block','test_intro']},
-                'hierarchical_rule': {'trial_id': gen_cols + ['feedback', 'test_intro']},
-                'information_sampling_task': {'trial_id': gen_cols + ['test_intro', 'DW_intro', 'reset_round']},
-                'keep_track': {'trial_id': gen_cols + []},
-                'kirby': {'trial_id': gen_cols + []},
-                'local_global_letter': {'trial_id': gen_cols + ['practice_intro', 'test_intro']},
-                'motor_selective_stop_signal': {'trial_id': gen_cols + ['prompt_fixation']},
-                'probabilistic_selection': {'trial_id': gen_cols + []},
-                'psychological_refractory_period_two_choices': {'trial_id': gen_cols + []},
-                'recent_probes': {'trial_id': gen_cols + ['intro_test', 'test_intro', 'iti_fixation']},
-                'shift_task': {'trial_id': gen_cols + []},
-                'simple_reaction_time': {'trial_id': gen_cols + ['practice_intro','reset_trial','test_intro']},
-                'spatial_span': {'trial_id': gen_cols + ['test_intro', 'start_reverse_intro', 'stim', 'feedback']},
-                'stim_selective_stop_signal': {'trial_id': gen_cols + []},
-                'stop_signal': {'trial_id': gen_cols + ['reset']},
-                'stroop': {'trial_id': gen_cols + ['practice_intro', 'test_intro', ]}, 
-                'simon':{'trial_id': gen_cols + ['reset_trial', 'test_intro']}, 
-                'threebytwo': {'trial_id': gen_cols + ['cue','practice_intro', 'gap', 'test_intro', 'set_stims']},
-                'tower_of_london': {'trial_id': gen_cols + []},
-                'two_stage_decision': {'trial_id': gen_cols + ['practice_intro', 'test_intro', 'wait', 'first_stage_selected', 'second_stage_selected', 'wait_update_fb']},
-                'willingness_to_wait': {'trial_id': gen_cols + ['practice_intro', 'test_intro']},
-                'writing_task': {}}    
-                
-    try:
-        return lookup[experiment]
-    except KeyError:
-        print "Automatic lookup of drop rows failed: experiment not found in lookup table."
-        return {}
-       
+    
 def check_template(row):
     """Determines which template was used to create a data object
     :row: tone row of a results dataframe
@@ -185,7 +100,11 @@ def get_data(row):
         else:
             print "No data found"
     elif check_template(row) == 'survey':
-        return data.values()
+        survey =  data.values()
+        for i in survey:
+            i['question_num'] = int(re.search(r'%s_([0-9]{1,2})*' % i['experiment'], i['id']).group(1))
+        survey = sorted(survey, key=lambda k: k['question_num'])
+        return survey
     elif check_template(row) == 'unknown':
         print "Couldn't determine data template"
         
@@ -199,29 +118,91 @@ def lookup_val(val):
         #convert unicode to str
         if isinstance(val, unicode):
             val = unicodedata.normalize('NFKD', val).encode('ascii', 'ignore')
-        val = val.strip().lower()
-        val = val.replace(" ", "_")
+        lookup_val = val.strip().lower()
+        lookup_val = val.replace(" ", "_")
         #define synonyms
         lookup = {
         'reaction time': 'rt',
         'instructions': 'instruction',
         'correct': 1,
         'incorrect': 0}
-        return lookup.get(val,val)
+        return lookup.get(lookup_val,val)
     else:
         return val
-     
+    
+def select_battery(results, battery):
+    '''Selects a battery (or batteries) from results object and sorts based on worker and time of experiment completion
+    :results: a Results object
+    :battery: a string or array of strings to select the battery(s)
+    :return df: dataframe containing the appropriate result subset
+    '''
+    Pass = True
+    if isinstance(battery, (unicode, str)):
+        battery = [battery]
+    df = results.get_results()
+    for b in battery:
+        if not b in df['battery'].values:
+            print "Alert!:  The battery '%s' not found in results. Try resetting the results" % (b)  
+            Pass = False
+    assert Pass == True, "At least one battery was not found in results"
+    df = df.query("battery in %s" % battery)
+    df = df.sort_values(by = ['battery', 'experiment', 'worker', 'finishtime'])
+    df.reset_index(inplace = True)
+    return df
+    
+def select_experiment(results, exp_id):
+    '''Selects an experiment (or experiments) from results object and sorts based on worker and time of experiment completion
+    :results: a Results object
+    :param exp_id: a string or array of strings to select the experiment(s)
+    :return df: dataframe containing the appropriate result subset
+    '''
+    Pass = True
+    if isinstance(exp_id, (unicode, str)):
+        exp_id = [exp_id]
+    df = results.get_results()
+    for e in exp_id:
+        if not e in df['experiment'].values:
+            print "Alert!: The experiment '%s' not found in results. Try resetting the results" % (e)
+            Pass = False
+    assert Pass == True, "At least one experiment was not found in results"
+    df = df.query("experiment in %s" % exp_id)
+    df = df.sort_values(by = ['experiment', 'worker', 'battery', 'finishtime'])
+    return df
+    
+def select_worker(results, worker):
+    '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
+    :results: a Results object
+    :worker: a string or array of strings to select the worker(s)
+    :return df: dataframe containing the appropriate result subset
+    '''
+    Pass = True
+    if isinstance(worker, (unicode, str)):
+        worker = [worker]
+    df = results.get_results()
+    for w in worker:
+        if not w in df['worker'].values:
+            print "Alert!: The experiment '%s' not found in results. Try resetting the results" % (w)
+            Pass = False
+    assert Pass == True, "At least one worker was not found in results"
+    df = df.query("worker in %s" % worker)
+    df = df.sort_values(by = ['worker', 'experiment', 'battery', 'finishtime'])
+    df.reset_index(inplace = True)
+    return df   
+
+def select_template(results, template):
+    '''Selects a template (or templates) from results object and sorts based on experiment and time of experiment completion
+    :results: a Results object
+    :template: a string or array of strings to select the worker(s)
+    :return df: dataframe containing the appropriate result subset
+    '''
+    if isinstance(template, (unicode, str)):
+        template = [template]
+    template = map(str.lower,template)
+    df = results.get_results()
+    df = df[[check_template(row['data']) in template for i,row in df.iterrows()]]
+    assert len(df) != 0, "At least one template was not found in results"
+    df = df.sort_values(by = ['worker', 'experiment', 'battery', 'finishtime'])
+    df.reset_index(inplace = True)
+    return df
     
 
-
-def time_diff(t1, t2, output = 'hour'):
-    '''Returns time elapsed between two time points. Specify output format as 
-    "min", "hour", or "day"
-    '''
-    divisor = {'min': 60.0, 'hour': 3600.0, 'day': 86400.0}
-    FMT = '%Y-%m-%d %H:%M:%S'
-    t1 = datetime.datetime.strptime(t1,FMT)
-    t2 = datetime.datetime.strptime(t2,FMT)
-    diff = (max(t1,t2) - min(t1,t2))
-    diff = diff.seconds + diff.days * 86400
-    return diff/divisor[output]

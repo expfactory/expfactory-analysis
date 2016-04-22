@@ -18,6 +18,7 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
     """ Calculate 
     
     """
+    summaries = {}
     for experiment in results.get_experiments():
         print '*********************'
         print experiment
@@ -43,13 +44,14 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
             exp_columns = ['Stats'] + groupby + exp_columns
         if len(exp_columns) > 0:
             summary = summary[exp_columns]
+        summaries[experiment] = summary
         print(summary)
         print('\n')
         input_text = raw_input("Press Enter to continue...")
         if input_text == 'exit':
             break
     if not silent:
-        return summary
+        return summaries
 
 def get_groupby(experiment):
     '''Function used by basic_stats to group data ouptut
@@ -72,15 +74,15 @@ def get_groupby(experiment):
                 'keep_track': [],
                 'kirby': [],
                 'local_global_letter': [],
-                'motor_selective_stop_signal': [],
+                'motor_selective_stop_signal': ['SS_trial_type'],
                 'probabilistic_selection': [],
                 'psychological_refractory_period_two_choices': [],
                 'recent_probes': [],
                 'shift_task': [],
                 'simple_reaction_time': [],
                 'spatial_span': ['condition'],
-                'stim_selective_stop_signal': [],
-                'stop_signal': [],
+                'stim_selective_stop_signal': ['condition'],
+                'stop_signal': ['condition', 'SS_trial_type'],
                 'stroop': ['condition'], 
                 'simon':['condition'], 
                 'threebytwo': ['task_switch', 'cue_switch'],
@@ -92,7 +94,7 @@ def get_groupby(experiment):
     try:
         return lookup[experiment]
     except KeyError:
-        print "Automatic lookup of groups failed: experiment not found in lookup table."
+        print "Automatic lookup of groups failed: %s not found in lookup table." % experiment
         return {}
     
 def EZ_diffusion(df):

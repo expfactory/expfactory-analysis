@@ -3,10 +3,10 @@
 Temporary file for testing analysis
 """
 
-from expanalysis.results import Results, extract_experiment
+from expanalysis.results import Results
 from expanalysis.stats import compute_contrast, compute_regression, basic_stats
 from expanalysis.experiments.jspsych import *
-from expanalysis.utils import get_data
+from expanalysis.processing import extract_experiment
 import pandas
 import seaborn as sns
 
@@ -63,11 +63,20 @@ dpx_df = extract_experiment(results,'dot_pattern_expectancy')
 #for forget
 forget_df = extract_experiment(results, 'directed_forgetting')
 
+#for keep track
+keep_df = extract_experiment(results, 'keep_track')
+
+#for kirby track
+kirby_df = extract_experiment(results, 'kirby')
+
 #for hierarchical
 hierarchical_df = extract_experiment(results, 'hierarchical_rule')
 
 #for ISI
 ISI_df = extract_experiment(results, 'information_sampling_task')
+
+# for probabilistic selection
+prob_df = extract_experiment(results, 'probabilistic_selection')
 
 #for simon
 shift_df = extract_experiment(results, 'shift_task')
@@ -81,7 +90,8 @@ spatial_df = extract_experiment(results, 'spatial_span')
 
 #for stop
 stop_df = extract_experiment(results, 'stop_signal')
-
+motor_df =  extract_experiment(results, 'motor_selective_stop_signal')
+stim_df =  extract_experiment(results, 'stim_selective_stop_signal')
 
 #for stroop
 stroop_df = extract_experiment(results, 'stroop')

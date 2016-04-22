@@ -1,11 +1,10 @@
 '''
-analysis/results.py: part of expfactory package
+analysis/experiments/jspsych.py: part of expfactory package
 jspsych functions
-
 '''
-from expanalysis.results import select_worker, extract_experiment
-from expanalysis.utils import check_template, get_data, lookup_val
 import numpy
+from expanalysis.utils import check_template, get_data, lookup_val, select_worker
+from expanalysis.processing import extract_experiment
 
 def calc_time_taken(results):
     '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
@@ -76,6 +75,7 @@ def get_post_task_responses(results):
         question_responses[worker] = worker_responses
     return question_responses
     
+
 
     
     
