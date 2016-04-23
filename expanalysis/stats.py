@@ -1,38 +1,50 @@
 '''
 expanalysis/stats.py: part of expfactory package
 stats functions
-
 '''
 from expanalysis.maths import check_numeric
 from expanalysis.results import extract_experiment
+from expanalysis.plots import plot_groups
 from patsy import ModelDesc
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import scipy.stats as stats
 import seaborn as sns
+from matplotlib import pyplot as plt
 import pandas
 import numpy
 import hddm
 
-def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, use_groups = True,  silent = False):
+def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, use_groups = True, split_workers = True, plot = False, silent = False):
     """ Calculate 
     
     """
-    summaries = {}
+    stats = {}
     for experiment in results.get_experiments():
-        print '*********************'
-        print experiment
-        print '*********************'
+        stats[experiment] = {}
+        if not silent or plot:
+            print '*********************'
+            print experiment
+            print '*********************'
         groupby = get_groupby(experiment)
-        exp_columns = []
+        groupby = groupby + ['worker']
         df = extract_experiment(results, experiment)
+        generic_drop_cols = ['correct_response', 'question_num', 'focus_shifts', 'full_screen', 'stim_id', 'trial_id', 'index', 'trial_num', 'responses', 'key_press', 'time_elapsed']
+        df.replace(-1, numpy.nan, inplace = True)
+        
         if remove_practice and 'exp_stage' in df.columns:
             df = df.query('exp_stage != "practice"')
-        summary = df.describe()
+            
         if not set(columns).issubset(df.columns):
-            print "Columns selected were not in the dataframe. Printing generic info"
+            print "Columns selected were not found for %s. Printing generic info" % experiment
+            keep_cols = df.columns
         else:
-            exp_columns += columns
+            keep_cols = groupby + columns
+        df = df[keep_cols]
+        drop_cols = [col for col in generic_drop_cols if col in df.columns]
+        df = df.drop(drop_cols, axis = 1)
+            
+        #group summary if groupby variables exist
         if len(groupby) != 0:
             summary = df.groupby(groupby).describe()
             summary.reset_index(inplace = True)
@@ -41,17 +53,26 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
             summary.insert(0, 'Stats', summary[stats_level])
             summary.drop(stats_level, axis = 1, inplace = True)
             summary = summary.query("Stats in ['mean','std','min','max','50%']")
-            exp_columns = ['Stats'] + groupby + exp_columns
-        if len(exp_columns) > 0:
-            summary = summary[exp_columns]
-        summaries[experiment] = summary
-        print(summary)
-        print('\n')
-        input_text = raw_input("Press Enter to continue...")
-        if input_text == 'exit':
-            break
-    if not silent:
-        return summaries
+        else:
+            summary = df.describe()
+            summary.insert(0, 'Stats', summary.index)
+            
+        #add summary to dictionary of summaries
+        stats[experiment]['summary'] = summary
+        
+        if plot:
+            p = plot_groups(plot_df, groupby)
+            stats[experiment]['plot'] = p
+        if not silent:
+            print(summary)
+            print('\n')
+        if silent or plot:
+            input_text = raw_input("Press Enter to continue...")
+            plt.close()
+            if input_text == 'exit':
+                break
+            
+    return stats
 
 def get_groupby(experiment):
     '''Function used by basic_stats to group data ouptut
@@ -59,7 +80,7 @@ def get_groupby(experiment):
     '''
     lookup = {'adaptive_n_back': ['load'],
                 'angling_risk_task_always_sunny': [], 
-                'attention_network_task': ['cue','flanker_type'], 
+                'attention_network_task': ['flanker_type', 'cue'], 
                 'bickel_titrator': [], 
                 'choice_reaction_time': [], 
                 'columbia_card_task_cold': [], 
@@ -95,7 +116,7 @@ def get_groupby(experiment):
         return lookup[experiment]
     except KeyError:
         print "Automatic lookup of groups failed: %s not found in lookup table." % experiment
-        return {}
+        return []
     
 def EZ_diffusion(df):
     assert 'correct' in df.columns, 'Could not calculate EZ DDM'

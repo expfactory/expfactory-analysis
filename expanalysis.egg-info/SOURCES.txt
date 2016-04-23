@@ -2,6 +2,7 @@ MANIFEST.in
 expanalysis/__init__.py
 expanalysis/api.py
 expanalysis/maths.py
+expanalysis/plots.py
 expanalysis/processing.py
 expanalysis/results.py
 expanalysis/stats.py

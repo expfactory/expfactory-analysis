@@ -1,7 +1,6 @@
 """
 analysis/utils.py: part of expfactory package
 functions for working with experiment factory results
-
 """
 
 import requests
@@ -39,7 +38,6 @@ def get_pages(url="http://www.expfactory.org/api/results",access_token=None):
     return results
      
     
-
 def get_url(url,headers=None):
     '''get_url returns a url, with params embedded in the header
     :param url: the url to retrieve
@@ -102,7 +100,7 @@ def get_data(row):
     elif check_template(row) == 'survey':
         survey =  data.values()
         for i in survey:
-            i['question_num'] = int(re.search(r'%s_([0-9]{1,2})*' % i['experiment'], i['id']).group(1))
+            i['question_num'] = int(re.search(r'%s_([0-9]{1,2})*' % row['experiment'], i['id']).group(1))
         survey = sorted(survey, key=lambda k: k['question_num'])
         return survey
     elif check_template(row) == 'unknown':
@@ -205,4 +203,20 @@ def select_template(results, template):
     df.reset_index(inplace = True)
     return df
     
-
+def select_finishtime(results, finishtime, all_data = True):
+     '''Get results after a finishtime 
+    :results: a Results object
+    :finishtime: a date string
+    :param all_data: boolean, default True. If true, only select data where the entire dataset was collected afte rthe finishtime
+    :return df: dataframe containing the appropriate result subset
+    '''
+     df = results.get_results()
+     if all_data:
+        passed_df = df.groupby('worker')['finishtime'].min() >= finishtime
+        workers = list(passed_df[passed_df].index)
+        df = select_worker(results, workers)
+     else:
+        df = df.query('finishtime >= "%s"' % finishtime) 
+        df.reset_index(inplace = True)
+     return df
+    

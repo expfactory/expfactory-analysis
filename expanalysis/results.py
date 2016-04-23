@@ -6,7 +6,7 @@ results class
 
 from expanalysis.api import get_results
 from expanalysis.utils import load_result, select_battery, select_experiment, \
-     select_worker, select_template
+     select_worker, select_template, select_finishtime
 from expanalysis.processing import extract_experiment
 import pandas
 import numpy
@@ -33,6 +33,7 @@ class Results:
         self.experiment = None
         self.worker = None
         self.template = None
+        self.finishtime = None
     
     #*******************************************
     #
@@ -83,7 +84,7 @@ class Results:
             print "results have already been cleaned"
         self.data = df
     
-    def filter(self, battery = None, experiment = None, worker = None, template = None, reset = False):
+    def filter(self, battery = None, experiment = None, worker = None, template = None, finishtime = None, reset = False):
         '''Subset results to the specific battery(s), experiment(s) or worker(s). Each
             attribute may be an array or a string. If reset is true, the data will
             be reset to a cleaned dataframe
@@ -91,6 +92,8 @@ class Results:
         :param experiment: a string or array of strings to select the experiment(s)
         :param worker: a string or array of strings to select the worker(s)
         :param template: a string or array of strings to select the expfactory templates
+        :param finishtime: either a string indicating the time when all data should come after, or a tuple
+        with the string, followed by a boolean indicating what select_finishtime should set all_data to
         :param reset: boolean. If true calls reset_data before filtering
         '''
         assert self.clean, "The results must be clean to filter"
@@ -108,6 +111,13 @@ class Results:
         if experiment != None:
             self.data = select_experiment(self, experiment)
             self.experiment = experiment
+        if finishtime != None:
+            if isinstance(finishtime, str):
+                self.data = select_finishtime(self,finishtime)
+                self.finishtime = finishtime
+            else:
+                self.data = select_finishtime(self, finishtime[0], finishtime[1])
+                self.finishtime = finishtime[0]
         
     def get_filters(self, silent = False):
         '''Returns the settings for the current active dataset
@@ -124,7 +134,7 @@ class Results:
                  'worker': self.worker,
                  'template': self.template})
         
-    def reset(self, battery = True, experiment = True, worker = True, template = True, clean = True):
+    def reset(self, battery = True, experiment = True, worker = True, template = True, finishtime = True, clean = True):
         '''resets the data to the original loaded value and cleans if flag is set
         :param clean: boolean, if true cleans the data
         :param battery: boolean, if true reset battery filter
@@ -143,6 +153,8 @@ class Results:
             self.worker = None
         if template:
             self.template = None
+        if finishtime:
+            self.finishtime = None
     
     def get_batteries(self):
         '''  Returns array of workers in the active results
