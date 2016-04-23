@@ -4,7 +4,7 @@ Temporary file for testing analysis
 """
 
 from expanalysis.results import Results
-from expanalysis.stats import compute_contrast, compute_regression, basic_stats
+from expanalysis.stats import compute_contrast, compute_regression, results_check
 from expanalysis.experiments.jspsych import *
 from expanalysis.processing import extract_experiment
 import pandas
@@ -42,13 +42,16 @@ time_taken=print_time(results)
 time_taken.hist(bins = 20)
 
 
-stats = basic_stats(results, silent = True, plot = True)
+stats = results_check(results, silent = True, plot = True)
 
 #for adaptive_n_back
 nback_df = extract_experiment(results, 'adaptive_n_back')
 
 #for ant
 ant_df = extract_experiment(results, 'attention_network_task')
+
+#for ant
+df = extract_experiment(results, 'angling_risk_task_always_sunny')
 
 #for choice
 choice_df = extract_experiment(results, 'choice_reaction_time')

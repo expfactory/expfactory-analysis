@@ -15,48 +15,82 @@ import pandas
 import numpy
 import hddm
 
-def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, use_groups = True, split_workers = True, plot = False, silent = False):
-    """ Calculate 
-    
+def results_check(results, experiment = None, worker = None, columns = ['correct', 'rt'], remove_practice = True, use_groups = True,  plot = False, silent = False):
+    """Outputs info for a basic data check on the results object. Uses data_check to group, describe and plot
+    dataframes. Function first filters the results object as specified,
+    loops through each experiment and worker contained in the results object, performs some basic dataframe manipulation
+    and runs data_check
+    :df:
+    :param experiment: a string or array of strings to select the experiment(s) before calculating basic stats
+    :param worker: a string or array of strings to select the worker(s) before calculating basic stats
+    :param columns: array of columns to subset summary statistics, if they exist
+    :param remove_practice: bool, default True. If True will remove any rows labeled "practice" in the "exp_stage" column, if it exists
+    :param use_groups: bool, default True. If True will lookup grouping variables using get_groupby for the experiment
+    :param silent: bool, default False. If True will not print output
+    :param plot: bool, default False: If True plots data using plot_groups
+    :return summary, p: summary data frame and plot object
     """
     stats = {}
+    filters = results.get_filters(silent = True)
+    results.filter(experiment = experiment, worker = worker)
     for experiment in results.get_experiments():
         stats[experiment] = {}
         if not silent or plot:
-            print '*********************'
-            print experiment
-            print '*********************'
-        groupby = get_groupby(experiment)
-        df = extract_experiment(results, experiment)
-        generic_drop_cols = ['correct_response', 'question_num', 'focus_shifts', 'full_screen', 'stim_id', 'trial_id', 'index', 'trial_num', 'responses', 'key_press', 'time_elapsed']
-        df.replace(-1, numpy.nan, inplace = True)
-        
-        if remove_practice and 'exp_stage' in df.columns:
-            df = df.query('exp_stage != "practice"')
-            
-        if not set(columns).issubset(df.columns):
-            print "Columns selected were not found for %s. Printing generic info" % experiment
-            keep_cols = df.columns
+            print '******************************************************************************'
+            print '    Experiment: ',  experiment
+            print '******************************************************************************'
+        if use_groups:
+            groupby = get_groupby(experiment)
         else:
-            keep_cols = groupby + columns
-        df = df[keep_cols]
-        drop_cols = [col for col in generic_drop_cols if col in df.columns]
-        df = df.drop(drop_cols, axis = 1)
-        
-        summary, p = data_check(df, groupby, silent, plot)
-        #add summary and plot to dictionary of summaries
-        stats[experiment]['summary'] = summary
-        stats[experiment]['plot'] = p
-        
-        if silent or plot:
-            input_text = raw_input("Press Enter to continue...")
-            plt.close()
-            if input_text == 'exit':
-                break
-            
+            groupby = []
+        experiment_df = extract_experiment(results, experiment)
+        for worker in pandas.unique(experiment_df['worker']):
+            if not silent or plot:
+                print '******************************************************************************'
+                print '    Worker: ',  worker
+                print '******************************************************************************'
+            df = experiment_df.query('worker == "%s"' % worker)
+            summary, p = data_check(df, columns, remove_practice, groupby, silent, plot)
+            #add summary and plot to dictionary of summaries
+            stats[experiment]= {worker: {'summary': summary, 'plot': p}}
+            if not silent or plot:
+                input_text = raw_input("Press Enter to continue...")
+                plt.close()
+                if input_text in ['skip', 'exit']:
+                    break
+        if input_text == 'exit': 
+            break
+    results.filter(filters = filters, reset = True) 
     return stats
 
-def data_check(df, groupby, silent = False, plot = False):
+def data_check(df, columns = [], remove_practice = True, groupby = [], silent = False, plot = False):
+    """Outputs info for a basic data check on one experiment. Functionality to group, describe and plot
+    dataframes
+    :df:
+    :param columns: array of columns to subset summary statistics, if they exist
+    :param remove_practice: bool, default True. If True will remove any rows labeled "practice" in the "exp_stage" column, if it exists
+    :param groupby: list of columns in df to groupby using pandas .groupby function
+    :param silent: bool, default False. If True will not print output
+    :param plot: bool, default False: If True plots data using plot_groups
+    :return summary, p: summary data frame and plot object
+    """
+    assert len(pandas.unique(df['experiment'])) == 1, \
+        "More than one experiment found"
+    generic_drop_cols = ['correct_response', 'question_num', 'focus_shifts', 'full_screen', 'stim_id', 'trial_id', 'index', 'trial_num', 'responses', 'key_press', 'time_elapsed']
+    df.replace(-1, numpy.nan, inplace = True)
+    
+    if remove_practice and 'exp_stage' in df.columns:
+        df = df.query('exp_stage != "practice"')
+        
+    if not set(columns).issubset(df.columns) or len(columns) == 0:
+        print "Columns selected were not found for %s. Printing generic info" % df['experiment'].iloc[0]
+        keep_cols = df.columns
+    else:
+        keep_cols = groupby + columns
+    df = df[keep_cols]
+    drop_cols = [col for col in generic_drop_cols if col in df.columns]
+    df = df.drop(drop_cols, axis = 1)
+        
     #group summary if groupby variables exist
     if len(groupby) != 0:
         summary = df.groupby(groupby).describe()
