@@ -27,7 +27,6 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
             print experiment
             print '*********************'
         groupby = get_groupby(experiment)
-        groupby = groupby + ['worker']
         df = extract_experiment(results, experiment)
         generic_drop_cols = ['correct_response', 'question_num', 'focus_shifts', 'full_screen', 'stim_id', 'trial_id', 'index', 'trial_num', 'responses', 'key_press', 'time_elapsed']
         df.replace(-1, numpy.nan, inplace = True)
@@ -43,29 +42,12 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
         df = df[keep_cols]
         drop_cols = [col for col in generic_drop_cols if col in df.columns]
         df = df.drop(drop_cols, axis = 1)
-            
-        #group summary if groupby variables exist
-        if len(groupby) != 0:
-            summary = df.groupby(groupby).describe()
-            summary.reset_index(inplace = True)
-            #reorder columns
-            stats_level = 'level_%s' % len(groupby)
-            summary.insert(0, 'Stats', summary[stats_level])
-            summary.drop(stats_level, axis = 1, inplace = True)
-            summary = summary.query("Stats in ['mean','std','min','max','50%']")
-        else:
-            summary = df.describe()
-            summary.insert(0, 'Stats', summary.index)
-            
-        #add summary to dictionary of summaries
-        stats[experiment]['summary'] = summary
         
-        if plot:
-            p = plot_groups(plot_df, groupby)
-            stats[experiment]['plot'] = p
-        if not silent:
-            print(summary)
-            print('\n')
+        summary, p = data_check(df, groupby, silent, plot)
+        #add summary and plot to dictionary of summaries
+        stats[experiment]['summary'] = summary
+        stats[experiment]['plot'] = p
+        
         if silent or plot:
             input_text = raw_input("Press Enter to continue...")
             plt.close()
@@ -74,6 +56,28 @@ def basic_stats(results, columns = ['correct', 'rt'], remove_practice = True, us
             
     return stats
 
+def data_check(df, groupby, silent = False, plot = False):
+    #group summary if groupby variables exist
+    if len(groupby) != 0:
+        summary = df.groupby(groupby).describe()
+        summary.reset_index(inplace = True)
+        #reorder columns
+        stats_level = 'level_%s' % len(groupby)
+        summary.insert(0, 'Stats', summary[stats_level])
+        summary.drop(stats_level, axis = 1, inplace = True)
+        summary = summary.query("Stats in ['mean','std','min','max','50%']")
+    else:
+        summary = df.describe()
+        summary.insert(0, 'Stats', summary.index)
+    if plot:
+        p = plot_groups(df, groupby)
+    else:
+        p = numpy.nan
+    if not silent:
+        print(summary)
+        print('\n')
+    return summary, p
+    
 def get_groupby(experiment):
     '''Function used by basic_stats to group data ouptut
     :experiment: experiment key used to look up appropriate grouping variables

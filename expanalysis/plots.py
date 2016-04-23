@@ -11,7 +11,10 @@ def plot_groups(df, groupby):
     try:
         df = df[groupby].join(df._get_numeric_data())
     except ValueError:
-        df = df[groupby].merge(df._get_numeric_data())
+        numeric_df = df._get_numeric_data()
+        drop_cols = [col for col in groupby if col in numeric_df.columns]
+        numeric_df = numeric_df.drop(drop_cols, axis = 1)
+        df = df[groupby].join(numeric_df)
     df = pandas.melt(df, groupby)
     if len(groupby)== 0:
         p = sns.factorplot(y = 'value', data = df, kind = 'bar', col = 'variable', sharey = False)
