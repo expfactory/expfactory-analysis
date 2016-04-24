@@ -29,13 +29,14 @@ results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_r
 
 
 #Filter results
-results.filter(battery = 'Self Regulation Pilot')
+results.filter(battery = 'Self Regulation Pilot', reset = True)
 #How many tasks has each worker done?
-results.get_results().groupby('worker').count()
 # time when data structure was updated
 update_time = '2016-04-17T04:24:37.041870Z'
 complete_wokrer = 'A07375212LC8D25XBGZ1J'
 results.filter(finishtime = update_time)
+results.get_results().groupby('worker').count()
+
 #Add time to each experiment
 calc_time_taken(results)
 time_taken=print_time(results)
