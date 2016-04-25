@@ -63,7 +63,7 @@ def results_check(results, experiment = None, worker = None, columns = ['correct
                     break
         if input_text == 'exit': 
             break
-    results.filter(filters = filters, reset = True) 
+    results.filter(reset = True, **filters) 
     return stats
 
 def data_check(df, columns = [], remove_practice = True, groupby = [], silent = False, plot = False):
