@@ -31,3 +31,4 @@ def keep_track_post(df):
                 score = sum([word in targets for word in response])
                 df.set_value(i, 'score', score)
                 df.set_value(i, 'possible_score', len(targets))
+    return df
