@@ -22,7 +22,7 @@ pandas.set_option('display.width', 200)
 #if (len(results.get_results()) > 0):
 #    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
 #    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
-
+#
 
 #Lad results from File
 results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json')
@@ -32,9 +32,10 @@ results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_r
 results.filter(battery = 'Self Regulation Pilot', reset = True)
 #How many tasks has each worker done?
 # time when data structure was updated
-update_time = '2016-04-17T04:24:37.041870Z'
+first_update_time = '2016-04-17T04:24:37.041870Z'
+second_update_time = '2016-04-23T04:24:37.041870Z'
 complete_wokrer = 'A07375212LC8D25XBGZ1J'
-results.filter(finishtime = update_time)
+results.filter(finishtime = first_update_time)
 results.get_results().groupby('worker').count()
 
 #Add time to each experiment

@@ -2,7 +2,7 @@
 analysis/processing.py: part of expfactory package
 functions for automatically cleaning and manipulating experiments
 """
-from expanalysis.experiments.jspsych_processing import directed_forgetting_post, stop_signal_post
+from expanalysis.experiments.jspsych_processing import directed_forgetting_post, keep_track_post, stop_signal_post
 from expanalysis.utils import get_data, lookup_val, select_experiment
 import pandas
 import numpy
@@ -67,11 +67,11 @@ def get_drop_rows(experiment):
                 'digit_span': {'trial_id': gen_cols + ['start_reverse', 'stim', 'feedback']},
                 'directed_forgetting': {'trial_id': gen_cols + ['ITI_fixation', 'intro_test', 'stim', 'cue']},
                 'dot_pattern_expectancy': {'trial_id': gen_cols + ['rest', 'cue', 'feedback']},
-                'go_nogo': {'trial_id': gen_cols + ['reset_trial','test_block']},
+                'go_nogo': {'trial_id': gen_cols + ['reset_trial']},
                 'hierarchical_rule': {'trial_id': gen_cols + ['feedback', 'test_intro']},
                 'information_sampling_task': {'trial_id': gen_cols + ['DW_intro', 'reset_round']},
                 'keep_track': {'trial_id': gen_cols + ['practice_end', 'stim']},
-                'kirby': {'trial_id': gen_cols + []},
+                'kirby': {'trial_id': gen_cols + ['prompt', 'wait']},
                 'local_global_letter': {'trial_id': gen_cols + []},
                 'motor_selective_stop_signal': {'trial_id': gen_cols + ['prompt_fixation', 'feedback']},
                 'probabilistic_selection': {'trial_id': gen_cols + []},
@@ -102,6 +102,7 @@ def apply_post(df, experiment):
     :experiment: experiment key used to look up appropriate grouping variables
     '''
     lookup = {'directed_forgetting': directed_forgetting_post,
+              'keep_track': keep_track_post,
                 'motor_selective_stop_signal': stop_signal_post,
                 'stim_selective_stop_signal': stop_signal_post,
                 'stop_signal': stop_signal_post}         
