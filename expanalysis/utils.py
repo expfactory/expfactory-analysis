@@ -114,7 +114,7 @@ def get_data(row):
         survey =  data.values()
         for i in survey:
             i['question_num'] = int(re.search(r'%s_([0-9]{1,2})*' % row['experiment'], i['id']).group(1))
-            i['response_text'] = get_response_text(i)
+            #i['response_text'] = get_response_text(i)
         survey = sorted(survey, key=lambda k: k['question_num'])
         return survey
     elif check_template(row) == 'unknown':
