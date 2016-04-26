@@ -10,37 +10,36 @@ from expanalysis.processing import extract_experiment
 import pandas
 import seaborn as sns
 
-%matplotlib inline
 pandas.set_option('display.width', 200)
 
-##Load Results from Database
-#f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
-#access_token = f.read().strip()
-#results = Results(access_token)
-#
+#Load Results from Database
+f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
+access_token = f.read().strip()
+results = Results(access_token)
+
 ##Keep a local copy saved each time
 #if (len(results.get_results()) > 0):
 #    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
 #    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
+#
 
-
-#Lad results from File
-results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json')
+##Lad results from File
+#results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json')
 
 
 #Filter results
-results.filter(battery = 'Self Regulation Pilot', reset = True)
+results.filter(battery = 'Self Regulation Pilot')
 #How many tasks has each worker done?
 # time when data structure was updated
 update_time = '2016-04-17T04:24:37.041870Z'
-complete_wokrer = 'A07375212LC8D25XBGZ1J'
+complete_worker = 'A07375212LC8D25XBGZ1J'
 results.filter(finishtime = update_time)
 results.get_results().groupby('worker').count()
 
-#Add time to each experiment
-calc_time_taken(results)
-time_taken=print_time(results)
-time_taken.hist(bins = 20)
+##Add time to each experiment
+#calc_time_taken(results)
+#time_taken=print_time(results)
+#time_taken.hist(bins = 20)
 
 
 stats = results_check(results, silent = True, plot = True)

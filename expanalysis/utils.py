@@ -86,6 +86,19 @@ def get_data(row):
     This function returns the data in a standard form (a list of trials)
     :data: the content of one row of the data column in a results dataframe
     """
+    def get_response_text(question):
+        """Returns the response text that corresponds to the value recorded in a survey question
+        :question: A dictionary corresponding to a survey question
+        """
+        val = question['response']
+        if 'options' in question.keys() and val != 'on':
+            options = question['options']
+            print(options)
+            text = [str(opt['text']) for opt in options if opt['value'] == val]
+            if len(text) == 1: text = text[0]
+        else:
+            text = pandas.np.nan
+        return text
     try:
         data = row['data']
     except:
@@ -101,6 +114,7 @@ def get_data(row):
         survey =  data.values()
         for i in survey:
             i['question_num'] = int(re.search(r'%s_([0-9]{1,2})*' % row['experiment'], i['id']).group(1))
+            i['response_text'] = get_response_text(i)
         survey = sorted(survey, key=lambda k: k['question_num'])
         return survey
     elif check_template(row) == 'unknown':
@@ -145,7 +159,7 @@ def select_battery(results, battery):
     assert Pass == True, "At least one battery was not found in results"
     df = df.query("battery in %s" % battery)
     df = df.sort_values(by = ['battery', 'experiment', 'worker', 'finishtime'])
-    df.reset_index(inplace = True)
+    df.reset_index(inplace = True, drop = True)
     return df
     
 def select_experiment(results, exp_id):
@@ -165,6 +179,7 @@ def select_experiment(results, exp_id):
     assert Pass == True, "At least one experiment was not found in results"
     df = df.query("experiment in %s" % exp_id)
     df = df.sort_values(by = ['experiment', 'worker', 'battery', 'finishtime'])
+    df.reset_index(inplace = True, drop = True)
     return df
     
 def select_worker(results, worker):
@@ -184,7 +199,7 @@ def select_worker(results, worker):
     assert Pass == True, "At least one worker was not found in results"
     df = df.query("worker in %s" % worker)
     df = df.sort_values(by = ['worker', 'experiment', 'battery', 'finishtime'])
-    df.reset_index(inplace = True)
+    df.reset_index(inplace = True, drop = True)
     return df   
 
 def select_template(results, template):
@@ -200,7 +215,7 @@ def select_template(results, template):
     df = df[[check_template(row['data']) in template for i,row in df.iterrows()]]
     assert len(df) != 0, "At least one template was not found in results"
     df = df.sort_values(by = ['worker', 'experiment', 'battery', 'finishtime'])
-    df.reset_index(inplace = True)
+    df.reset_index(inplace = True, drop = True)
     return df
     
 def select_finishtime(results, finishtime, all_data = True):
@@ -217,6 +232,6 @@ def select_finishtime(results, finishtime, all_data = True):
         df = select_worker(results, workers)
      else:
         df = df.query('finishtime >= "%s"' % finishtime) 
-        df.reset_index(inplace = True)
+        df.reset_index(inplace = True, drop = True)
      return df
     
