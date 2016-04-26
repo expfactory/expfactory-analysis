@@ -30,6 +30,9 @@ def results_check(results, experiment = None, worker = None, columns = ['correct
     :param plot: bool, default False: If True plots data using plot_groups
     :return summary, p: summary data frame and plot object
     """
+    print '******************************************************************************'
+    print 'Input: Type "exit" to end, "skip" to skip to the next experiment, or hit enter to continue'
+    print '******************************************************************************'
     stats = {}
     filters = results.get_filters(silent = True)
     results.filter(experiment = experiment, worker = worker)
@@ -60,7 +63,7 @@ def results_check(results, experiment = None, worker = None, columns = ['correct
                     break
         if input_text == 'exit': 
             break
-    results.filter(filters = filters, reset = True) 
+    results.filter(reset = True, **filters) 
     return stats
 
 def data_check(df, columns = [], remove_practice = True, groupby = [], silent = False, plot = False):

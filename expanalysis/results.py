@@ -84,7 +84,7 @@ class Results:
             print "results have already been cleaned"
         self.data = df
     
-    def filter(self, battery = None, experiment = None, worker = None, template = None, filters = {}, finishtime = None, reset = False):
+    def filter(self, battery = None, experiment = None, worker = None, template = None, finishtime = None, reset = False):
         '''Subset results to the specific battery(s), experiment(s) or worker(s). Each
             attribute may be an array or a string. If reset is true, the data will
             be reset to a cleaned dataframe
@@ -92,7 +92,6 @@ class Results:
         :param experiment: a string or array of strings to select the experiment(s)
         :param worker: a string or array of strings to select the worker(s)
         :param template: a string or array of strings to select the expfactory templates
-        :param filters: dictionary containing one or more filters. Directly specifying the filters will overwrite these.
         :param finishtime: either a string indicating the time when all data should come after, or a tuple
         with the string, followed by a boolean indicating what select_finishtime should set all_data to
         :param reset: boolean. If true calls reset_data before filtering
@@ -100,11 +99,6 @@ class Results:
         assert self.clean, "The results must be clean to filter"
         if reset:
             self.reset()
-        template = template or filters.get('template', None)
-        worker = worker or filters.get('worker', None)
-        experiment = experiment or filters.get('experiment', None)
-        battery = battery or filters.get('battery', None)
-        finishtime = finishtime or filters.get('finishtime', None)
         if template != None:
             self.data = select_template(self, template)
             self.template = template
