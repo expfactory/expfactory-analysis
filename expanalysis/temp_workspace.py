@@ -12,31 +12,26 @@ import seaborn as sns
 
 pandas.set_option('display.width', 200)
 
-#Load Results from Database
-f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
-access_token = f.read().strip()
-results = Results(access_token)
-
+##Load Results from Database
+#f = open('/home/ian/Experiments/expfactory/docs/expfactory_token.txt')
+#access_token = f.read().strip()
+#results = Results(access_token)
+#
 ##Keep a local copy saved each time
 #if (len(results.get_results()) > 0):
-#    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_clean.json')
-#    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json', orig = True)
-#
+#    results.export_data('/home/ian/Experiments/expfactory/data/Pilot2_results.json')
 
 
-#results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_results_orig.json')
+results = Results(results_file = '/home/ian/Experiments/expfactory/data/Pilot2_results.json')
 
 
-#Filter results
-results.filter(battery = 'Self Regulation Pilot')
 
 #How many tasks has each worker done?
 # time when data structure was updated
 
 first_update_time = '2016-04-17T04:24:37.041870Z'
 second_update_time = '2016-04-23T04:24:37.041870Z'
-complete_wokrer = 'A07375212LC8D25XBGZ1J'
-results.filter(finishtime = first_update_time)
+results.filter(battery = 'Self Regulation Pilot', finishtime = first_update_time)
 results.get_results().groupby('worker').count()
 
 stats = results_check(results, silent = True, plot = True)

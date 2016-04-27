@@ -1,4 +1,5 @@
 *.pyc
+*.fuse*
 build
 dist
 doc

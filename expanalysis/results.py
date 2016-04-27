@@ -178,7 +178,7 @@ class Results:
         '''
         return self.data
         
-    def export_data(self, filey, orig = False):
+    def export_data(self, filey, orig = True):
         """ Exports data to path specified by filey. Must be .csv, .pkl or .json
         :filey: path to export data
         :param orig: if True export the original (uncleaned) data, if False exports
