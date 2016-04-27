@@ -2,7 +2,8 @@
 analysis/processing.py: part of expfactory package
 functions for automatically cleaning and manipulating experiments
 """
-from expanalysis.experiments.jspsych_processing import directed_forgetting_post, keep_track_post, stop_signal_post
+from expanalysis.experiments.jspsych_processing import directed_forgetting_post, keep_track_post, stop_signal_post, \
+    calc_stroop_DV, calc_adaptive_n_back_DV
 from expanalysis.utils import get_data, lookup_val, select_experiment
 import pandas
 import numpy
@@ -77,7 +78,7 @@ def get_drop_rows(experiment):
                 'probabilistic_selection': {'trial_id': gen_cols + []},
                 'psychological_refractory_period_two_choices': {'trial_id': gen_cols + []},
                 'recent_probes': {'trial_id': gen_cols + ['intro_test', 'iti_fixation']},
-                'shift_task': {'trial_id': gen_cols + []},
+                'shift_task': {'trial_id': gen_cols + ['rest', 'alert', 'feedback']},
                 'simple_reaction_time': {'trial_id': gen_cols + ['reset_trial']},
                 'spatial_span': {'trial_id': gen_cols + ['start_reverse_intro', 'stim', 'feedback']},
                 'stim_selective_stop_signal': {'trial_id': gen_cols + ['feedback']},
@@ -106,11 +107,7 @@ def apply_post(df, experiment):
                 'motor_selective_stop_signal': stop_signal_post,
                 'stim_selective_stop_signal': stop_signal_post,
                 'stop_signal': stop_signal_post}         
-    try:
-        fun = lookup[experiment]
-    except KeyError:
-        print "No post processing function found for %s" % experiment
-        fun = lambda df: df
+    fun = lookup.get(experiment, lambda df: df)
     return fun(df)
 
 def extract_experiment(results, experiment, clean = True, drop_columns = None, drop_na = True):
@@ -142,3 +139,32 @@ def extract_experiment(results, experiment, clean = True, drop_columns = None, d
         df = clean_data(df, experiment, drop_columns, drop_na)
     df.reset_index(inplace = True)
     return df
+
+def extract_row(row, clean = True, drop_columns = None, drop_na = True):
+    '''Returns a dataframe that has expanded the data of one row of a results object
+    :row:  one row of a results dataframe
+    :param clean: boolean, if true call clean_df on the data
+    :param drop_columns: list of columns to pass to clean_df
+    :param drop_na: boolean to pass to clean_df
+    :return df: dataframe containing the extracted experiment
+    '''
+    exp_data = get_data(row)
+    for trial in exp_data:
+        trial['battery'] = row['battery']
+        trial['experiment'] = row['experiment']
+        trial['worker'] = row['worker']
+        trial['finishtime'] = row['finishtime']
+    df = pandas.DataFrame(exp_data)
+    if clean == True:
+        df = clean_data(df, row['experiment'], drop_columns, drop_na)
+    df.reset_index(inplace = True)
+    return df   
+    
+def get_DV(df, experiment):
+    '''Function used by clean_df to post-process dataframe
+    :experiment: experiment key used to look up appropriate grouping variables
+    '''
+    lookup = {'adaptive_n_back': calc_adaptive_n_back_DV,
+              'stroop': calc_stroop_DV }         
+    fun = lookup.get(experiment, lambda df: {})
+    return fun(df)

@@ -3,8 +3,8 @@ expanalysis/stats.py: part of expfactory package
 stats functions
 '''
 from expanalysis.maths import check_numeric
-from expanalysis.results import extract_experiment
 from expanalysis.plots import plot_groups
+from expanalysis.processing import extract_experiment, extract_row, get_DV
 from patsy import ModelDesc
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -158,6 +158,18 @@ def get_groupby(experiment):
     except KeyError:
         print "Automatic lookup of groups failed: %s not found in lookup table." % experiment
         return []
+
+
+def calc_DVs(results):
+    """Calculate DVs for each experiment
+    :results: results object
+    """
+    results = results.get_results()
+    DVs = []
+    for i, row in results.iterrows():
+        df = extract_row(row)
+        DVs.append(get_DV(df, row['experiment']))
+    results['DVs'] = DVs
     
 def EZ_diffusion(df):
     assert 'correct' in df.columns, 'Could not calculate EZ DDM'

@@ -84,17 +84,16 @@ def check_template(row):
 def get_data(row):
     """Data can be stored in different forms depending on the experiment template.
     This function returns the data in a standard form (a list of trials)
-    :data: the content of one row of the data column in a results dataframe
+    :row:  one row of a results dataframe
     """
     def get_response_text(question):
         """Returns the response text that corresponds to the value recorded in a survey question
         :question: A dictionary corresponding to a survey question
         """
         val = question['response']
-        if 'options' in question.keys() and val != 'on':
+        if 'options' in question.keys():
             options = question['options']
-            print(options)
-            text = [str(opt['text']) for opt in options if opt['value'] == val]
+            text = [lookup_val(opt['text']) for opt in options if 'value' in opt.keys() and opt['value'] == val]
             if len(text) == 1: text = text[0]
         else:
             text = pandas.np.nan
@@ -114,7 +113,7 @@ def get_data(row):
         survey =  data.values()
         for i in survey:
             i['question_num'] = int(re.search(r'%s_([0-9]{1,2})*' % row['experiment'], i['id']).group(1))
-            #i['response_text'] = get_response_text(i)
+            i['response_text'] = get_response_text(i)
         survey = sorted(survey, key=lambda k: k['question_num'])
         return survey
     elif check_template(row) == 'unknown':

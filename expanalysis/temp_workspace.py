@@ -4,7 +4,7 @@ Temporary file for testing analysis
 """
 
 from expanalysis.results import Results
-from expanalysis.stats import compute_contrast, compute_regression, results_check
+from expanalysis.stats import calc_DVs, results_check
 from expanalysis.experiments.jspsych import *
 from expanalysis.processing import extract_experiment
 import pandas
@@ -33,7 +33,7 @@ first_update_time = '2016-04-17T04:24:37.041870Z'
 second_update_time = '2016-04-23T04:24:37.041870Z'
 results.filter(battery = 'Self Regulation Pilot', finishtime = first_update_time)
 results.get_results().groupby('worker').count()
-
+calc_DVs(results)
 stats = results_check(results, silent = True, plot = True)
 
 #

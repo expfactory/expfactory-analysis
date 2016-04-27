@@ -32,3 +32,34 @@ def keep_track_post(df):
                 df.set_value(i, 'score', score)
                 df.set_value(i, 'possible_score', len(targets))
     return df
+
+
+def one_worker_decorate(func):
+    """Decorator to ensure that dv functions have only one worker
+    """
+    def one_worker_wrap(df):
+        assert len(pandas.unique(df['worker'])) == 1, \
+            'dataframe must only have one worker in it'
+        return func(df)
+    return one_worker_wrap
+    
+@one_worker_decorate  
+def calc_stroop_DV(df):
+    """ Calculate dv for stroop task. Incongruent-Congruent, median RT and Percent Correct
+    """
+    dvs = {}
+    contrast_df = df.groupby('condition')[['rt','correct']].agg(['mean','median'])
+    contrast = contrast_df.loc['incongruent']-contrast_df.loc['congruent']
+    dvs['rt'] = contrast['rt','median']
+    dvs['correct'] = contrast['correct', 'mean']
+    dvs['description'] = 'incongruent-congruent'
+    return dvs
+
+@one_worker_decorate
+def calc_adaptive_n_back_DV(df):
+    """ Calculate dv for adaptive_n_back task. Maximum load
+    """
+    dvs = {'max_load': df['load'].max()}
+    dvs['description'] = 'max load'
+    return dvs
+
