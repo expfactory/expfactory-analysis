@@ -44,71 +44,71 @@ stats = results_check(results, silent = True, plot = True)
 #
 #
 #
-##for adaptive_n_back
-#nback_df = extract_experiment(results, 'adaptive_n_back')
-#
-##for ant
-#ant_df = extract_experiment(results, 'attention_network_task')
-#
-##for art
-#art_df = extract_experiment(results, 'angling_risk_task_always_sunny')
-#
-##for choice
-#choice_df = extract_experiment(results, 'choice_reaction_time')
-#
-##for CCTC
-#CCTC_df = extract_experiment(results, 'columbia_card_task_cold')
-#
-##for CCTH
-#CCTH_df = extract_experiment(results, 'columbia_card_task_hot')
-#
-##for demo
-#demographics = extract_experiment(results,'demographics_survey')
-#female = (demographics.query('question_num in [2]')['response'].sum())
-#hispanic = (demographics.query('question_num in [4]')['response'].sum())
-#
-##for dpx
-#dpx_df = extract_experiment(results,'dot_pattern_expectancy')
-#
-##for forget
-#forget_df = extract_experiment(results, 'directed_forgetting')
-#
-##for keep track
-#keep_df = extract_experiment(results, 'keep_track', clean = False)
-#
-##for kirby track
-#kirby_df = extract_experiment(results, 'kirby')
-#
-##for hierarchical
-#hierarchical_df = extract_experiment(results, 'hierarchical_rule')
-#
-##for ISI
-#ISI_df = extract_experiment(results, 'information_sampling_task')
-#
-## for probabilistic selection
-#prob_df = extract_experiment(results, 'probabilistic_selection')
-#
-##for simon
-#shift_df = extract_experiment(results, 'shift_task')
-#
-##for simon
-#simon_df = extract_experiment(results, 'simon')
-#
-##for span
-#digit_df = extract_experiment(results, 'digit_span')
-#spatial_df = extract_experiment(results, 'spatial_span')
-#
-##for stop
-#stop_df = extract_experiment(results, 'stop_signal')
-#motor_df =  extract_experiment(results, 'motor_selective_stop_signal')
-#stim_df =  extract_experiment(results, 'stim_selective_stop_signal')
-#
-##for stroop
-#stroop_df = extract_experiment(results, 'stroop')
-#
-##for threebytwo
-#three_df = extract_experiment(results, 'threebytwo')
-#
-##for two stage
-#two_df = extract_experiment(results, 'two_stage_decision')
+#for adaptive_n_back
+nback_df = extract_experiment(results, 'adaptive_n_back')
+
+#for ant
+ant_df = extract_experiment(results, 'attention_network_task')
+
+#for art
+art_df = extract_experiment(results, 'angling_risk_task_always_sunny')
+
+#for choice
+choice_df = extract_experiment(results, 'choice_reaction_time')
+
+#for CCTC
+CCTC_df = extract_experiment(results, 'columbia_card_task_cold')
+
+#for CCTH
+CCTH_df = extract_experiment(results, 'columbia_card_task_hot')
+
+#for demo
+demographics = extract_experiment(results,'demographics_survey')
+female = (demographics.query('question_num in [2]')['response'].sum())
+hispanic = (demographics.query('question_num in [4]')['response'].sum())
+
+#for dpx
+dpx_df = extract_experiment(results,'dot_pattern_expectancy')
+
+#for forget
+forget_df = extract_experiment(results, 'directed_forgetting')
+
+#for keep track
+keep_df = extract_experiment(results, 'keep_track')
+
+#for kirby track
+kirby_df = extract_experiment(results, 'kirby')
+
+#for hierarchical
+hierarchical_df = extract_experiment(results, 'hierarchical_rule')
+
+#for ISI
+ISI_df = extract_experiment(results, 'information_sampling_task')
+
+# for probabilistic selection
+prob_df = extract_experiment(results, 'probabilistic_selection')
+
+#for simon
+shift_df = extract_experiment(results, 'shift_task')
+
+#for simon
+simon_df = extract_experiment(results, 'simon')
+
+#for span
+digit_df = extract_experiment(results, 'digit_span')
+spatial_df = extract_experiment(results, 'spatial_span')
+
+#for stop
+stop_df = extract_experiment(results, 'stop_signal')
+motor_df =  extract_experiment(results, 'motor_selective_stop_signal')
+stim_df =  extract_experiment(results, 'stim_selective_stop_signal')
+
+#for stroop
+stroop_df = extract_experiment(results, 'stroop')
+
+#for threebytwo
+three_df = extract_experiment(results, 'threebytwo')
+
+#for two stage
+two_df = extract_experiment(results, 'two_stage_decision')
 

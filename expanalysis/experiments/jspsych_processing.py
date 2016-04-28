@@ -10,12 +10,11 @@ def stop_signal_post(df):
     return df
     
 def directed_forgetting_post(df):
-    df = df.rename(columns={'stim': 'cue'})
-    for i in range(2,len(df)):
-        if df.loc[i,'trial_id'] == 'probe':
-            df.set_value(i,'stim_bottom', df.loc[i-3,'stim_bottom'])
-            df.set_value(i,'stim_top', df.loc[i-3,'stim_top'])
-            df.set_value(i,'cue', df.loc[i-2,'cue'])
+    df['cue'] = df['cue'].fillna(df['stim'])
+    df.drop('stim',axis = 1, inplace = True)
+    df['stim_bottom'] = df['stim_bottom'].fillna(df['stim_bottom'].shift(3))
+    df['stim_top'] = df['stim_top'].fillna(df['stim_bottom'].shift(3))
+    df['cue'] = df['cue'].fillna(df['cue'].shift(2))
     return df
     
 def keep_track_post(df):
@@ -34,32 +33,54 @@ def keep_track_post(df):
     return df
 
 
-def one_worker_decorate(func):
+def multi_worker_decorate(func):
     """Decorator to ensure that dv functions have only one worker
     """
-    def one_worker_wrap(df):
-        assert len(pandas.unique(df['worker'])) == 1, \
-            'dataframe must only have one worker in it'
-        return func(df)
-    return one_worker_wrap
-    
-@one_worker_decorate  
-def calc_stroop_DV(df):
-    """ Calculate dv for stroop task. Incongruent-Congruent, median RT and Percent Correct
-    """
-    dvs = {}
-    contrast_df = df.groupby('condition')[['rt','correct']].agg(['mean','median'])
-    contrast = contrast_df.loc['incongruent']-contrast_df.loc['congruent']
-    dvs['rt'] = contrast['rt','median']
-    dvs['correct'] = contrast['correct', 'mean']
-    dvs['description'] = 'incongruent-congruent'
-    return dvs
+    def multi_worker_wrap(group_df):
+        group_dvs = {}
+        for worker in pandas.unique(group_df['worker']):
+            df = group_df.query('worker == "%s"' %worker)
+            group_dvs[worker] = func(df)
+        return group_dvs
+    return multi_worker_wrap
 
-@one_worker_decorate
+@multi_worker_decorate
 def calc_adaptive_n_back_DV(df):
     """ Calculate dv for adaptive_n_back task. Maximum load
     """
+    df = df.query('exp_stage != "practice"')
     dvs = {'max_load': df['load'].max()}
     dvs['description'] = 'max load'
     return dvs
 
+@multi_worker_decorate
+def calc_choice_reaction_time_DV(df):
+    df = df.query('exp_stage != "practice"')
+    dvs = {}
+    dvs['avg_rt'] = df['rt'].median()
+    dvs['accuracy'] = df['correct'].mean()
+    dvs['description'] = 'standard'  
+    return dvs
+
+@multi_worker_decorate
+def calc_simple_reaction_time_DV(df):
+    df = df.query('exp_stage != "practice"')
+    dvs = {}
+    dvs['avg_rt'] = df['rt'].median()
+    dvs['description'] = 'average reaction time'  
+    return dvs
+    
+@multi_worker_decorate
+def calc_stroop_DV(df):
+    """ Calculate dv for stroop task. Incongruent-Congruent, median RT and Percent Correct
+    """
+    df = df.query('exp_stage != "practice"')
+    dvs = {}
+    contrast_df = df.groupby('condition')[['rt','correct']].agg(['mean','median'])
+    contrast = contrast_df.loc['incongruent']-contrast_df.loc['congruent']
+    dvs['stroop_rt'] = contrast['rt','median']
+    dvs['stroop_correct'] = contrast['correct', 'mean']
+    dvs['avg_rt'] = df['rt'].median()
+    dvs['accuracy'] = df['correct'].mean()
+    dvs['description'] = 'incongruent-congruent'
+    return dvs

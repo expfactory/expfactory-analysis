@@ -3,7 +3,7 @@ analysis/processing.py: part of expfactory package
 functions for automatically cleaning and manipulating experiments
 """
 from expanalysis.experiments.jspsych_processing import directed_forgetting_post, keep_track_post, stop_signal_post, \
-    calc_stroop_DV, calc_adaptive_n_back_DV
+    calc_adaptive_n_back_DV, calc_choice_reaction_time_DV, calc_simple_reaction_time_DV, calc_stroop_DV
 from expanalysis.utils import get_data, lookup_val, select_experiment
 import pandas
 import numpy
@@ -71,7 +71,7 @@ def get_drop_rows(experiment):
                 'go_nogo': {'trial_id': gen_cols + ['reset_trial']},
                 'hierarchical_rule': {'trial_id': gen_cols + ['feedback', 'test_intro']},
                 'information_sampling_task': {'trial_id': gen_cols + ['DW_intro', 'reset_round']},
-                'keep_track': {'trial_id': gen_cols + ['practice_end', 'stim']},
+                'keep_track': {'trial_id': gen_cols + ['practice_end', 'stim', 'wait', 'prompt']},
                 'kirby': {'trial_id': gen_cols + ['prompt', 'wait']},
                 'local_global_letter': {'trial_id': gen_cols + []},
                 'motor_selective_stop_signal': {'trial_id': gen_cols + ['prompt_fixation', 'feedback']},
@@ -90,12 +90,8 @@ def get_drop_rows(experiment):
                 'two_stage_decision': {'trial_id': gen_cols + ['wait', 'first_stage_selected', 'second_stage_selected', 'wait_update_fb']},
                 'willingness_to_wait': {'trial_id': gen_cols + []},
                 'writing_task': {}}    
-                
-    try:
-        return lookup[experiment]
-    except KeyError:
-        print "Automatic lookup of drop rows failed: %s not found in lookup table." % experiment
-        return {}
+    to_drop = lookup.get(experiment, {})
+    return to_drop
 
 
 def apply_post(df, experiment):
@@ -160,11 +156,13 @@ def extract_row(row, clean = True, drop_columns = None, drop_na = True):
     df.reset_index(inplace = True)
     return df   
     
-def get_DV(df, experiment):
+def get_DV_fun(df, experiment):
     '''Function used by clean_df to post-process dataframe
     :experiment: experiment key used to look up appropriate grouping variables
     '''
     lookup = {'adaptive_n_back': calc_adaptive_n_back_DV,
+              'choice_reaction_time': calc_choice_reaction_time_DV,
+              'simple_reaction_time': calc_simple_reaction_time_DV,
               'stroop': calc_stroop_DV }         
     fun = lookup.get(experiment, lambda df: {})
     return fun(df)

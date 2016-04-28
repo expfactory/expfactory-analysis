@@ -164,12 +164,17 @@ def calc_DVs(results):
     """Calculate DVs for each experiment
     :results: results object
     """
-    results = results.get_results()
-    DVs = []
-    for i, row in results.iterrows():
-        df = extract_row(row)
-        DVs.append(get_DV(df, row['experiment']))
-    results['DVs'] = DVs
+    results_df = results.get_results()
+    DVs = [numpy.nan]*len(results_df)
+    for experiment in results.get_experiments():
+        df = extract_experiment(results,experiment)
+        dvs = get_DV(df,experiment)   
+        for worker, val in dvs.items():
+            i = results_df.query('worker == "%s" and experiment == "%s"' %(worker,experiment)).index[0]
+            DVs[i] = val
+    results_df['DVs'] = DVs
+    
+
     
 def EZ_diffusion(df):
     assert 'correct' in df.columns, 'Could not calculate EZ DDM'
