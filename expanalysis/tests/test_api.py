@@ -40,8 +40,8 @@ class TestAPI(unittest.TestCase):
 
 
     def test_filter(self):
-        filtered = self.result.filter(field="experiment_exp_id",value="bucket_game")
-        self.assertTrue(filtered.shape[0]==17)
+        filtered = self.result.filter(field="experiment_exp_id",value="bridge_game")
+        self.assertTrue(filtered.shape[0]==20)
         self.assertTrue(len(numpy.unique(filtered["experiment_exp_id"]))==1)
 
     def test_load(self):
@@ -49,7 +49,7 @@ class TestAPI(unittest.TestCase):
         result = Result()
         data = result.load_results(self.jsonfile)
         self.assertTrue(isinstance(data,pandas.DataFrame))
-        self.assertTrue(data.shape[0] == 864)
+        self.assertTrue(data.shape[0] == 44)
         self.assertTrue(data.shape[1] == 13)
 
     def test_experiment_extract(self):
