@@ -3,46 +3,61 @@ expanalysis/results.py: part of expanalysis package
 results class
 
 '''
-from expanalysis.utils import clean_data, load_result, check_template, get_data
 from expanalysis.maths import check_numeric
-from expanaysis.testing import validate_result
+from expanalysis.testing import validate_result
 from expanalysis.api import get_results
+from expanalysis.utils import save_json
 import datetime
 import pandas
 import numpy
+import json
 import os
 
 class Result:
-    def __init__(self,access_token,fields=None,filters=None):
+    def __init__(self,access_token=None,fields=None,filters=None):
         """Result loads data from expfactory to store in a Results object.
-        :param access_token: token obtained from expfactory.org/token when user logged in [required]
-        :param fields: top level fields in the result json objects
+        :param access_token: token obtained from expfactory.org/token when user logged in
+        :param fields: top level fields in the result json objects (not required)
+        :param filters: filters to clean results (not required)
         """
         if fields == None:
             fields = get_result_fields()
-
-        self.json = get_results(access_token=access_token)
         self.data = None
-        self.results_to_df(fields)
-        self.clean_results(filters)
+        self.fields = fields
+        self.filters = filters
+ 
+        # If access token is provided, parse immediately
+        if access_token != None:
+            self.json = get_results(access_token=access_token)
+            self.results_to_df(fields)
+            self.clean_results(filters)
     
+    def load_results(self,json_file):
+        '''load_results will load a saved json object result
+        :param json_file: the json file to load
+        '''
+        self.json = json.load(open(json_file,"rb"))
+        self.results_to_df(self.fields)
+        self.clean_results(self.filters)
+        return self.data
+
     def results_to_df(self,fields):
         '''results_to_df converts json result into a dataframe of json objects
         :param fields: list of (top level) fields to parse
         '''
         tmp = pandas.DataFrame(self.json)
-        self.df = pandas.DataFrame()
+        self.data = pandas.DataFrame()
         for field in fields:
             if isinstance(tmp[field].values[0],dict):
                 try:
                     field_df = pandas.concat([pandas.DataFrame.from_dict(item, orient='index').T for item in tmp[field]])
                     field_df.index = range(0,field_df.shape[0])
                     field_df.columns = ["%s_%s" %(field,x) for x in field_df.columns.tolist()]
-                    self.df = pandas.concat([self.df,field_df],axis=1)
+                    self.data = pandas.concat([self.data,field_df],axis=1)
                 except:
-                    self.df[field] = tmp[field]                   
+                    self.data[field] = tmp[field]                   
             else:
-                 self.df[field] = tmp[field]                   
+                 self.data[field] = tmp[field]                   
                             
     def clean_results(self,filters=None):
         '''clean_results separates incomplete experiments, surveys, and games, and formats data
@@ -78,29 +93,84 @@ class Result:
             print 'Empty datasets found! See Results.empty field'
        
     
-    def filter(self,field,value):
+    def filter(self,field,value,sort_by=None,ascending=False):
         '''filter filters results based on a field of interest
         :param field: the field (column) name to filter
         :param value: the value to filter for
+        :param sort_by: a list of fields to sort by, default is datetime
+        :param ascending: direction of the sort (default False)
         '''
-        if self.data != None:
-            return self.data[self.data[field] == value]
+        if isinstance(self.data,pandas.DataFrame):
+
+            if field in self.data.columns:
+                # Default sorting is by finishing time
+                if sort_by == None and "finishtime" in self.data.columns:
+                    sort_by = ["finishtime"]
+                else:
+                    sort_by = [x for x in sort_by if x in self.data.columns]    
+                data_sorted = self.data.sort_values(by=sort_by,ascending=ascending)
+
+                return data_sorted[data_sorted[field] == value]
+            else:
+                print "Field %s is not present in the data columns. Choice are %s" %(field,",".join(self.data.columns))
         else:
             print "ERROR: No results found to filter."
-                
+       
+         
     def export(self,file_name):
-        """export exports data to path specified by file_name. Must end in .csv, .pkl or .json
-        :file_name: full path to export data
+        """export saves raw results data to json 
+        :param file_name: the json file to save to
         """
         file_name,ext = os.path.splitext(file_name)
-        if ext.lower() == ".csv":
-            self.data.to_csv(file_name)
-        elif ext.lower() == ".pkl":
-            self.data.to_pickle(file_name)
-        elif ext.lower() == ".json":
-            self.data.to_json(file_name)
+        if ext.lower() == ".json":
+            save_json(self.json,file_name)
         else:
-            print "File extension not recognized, must be .csv, .pkl, or .json." 
+            print "File extension to save raw results must be .json" 
+
+
+    def extract_experiment(self,exp_id):
+        '''Extract the data column of the results object for a specified experiment.
+        :param exp_id: the exp_id to extract
+        '''
+        if isinstance(self.data,pandas.DataFrame):
+            experiment = pandas.DataFrame()
+            if exp_id in self.data["experiment_exp_id"].tolist():
+
+                # Subset the data to the experiment of interest, give count
+                subset = self.filter("experiment_exp_id",exp_id)
+                subset.index = range(subset.shape[0])
+
+                for row in subset.iterrows():
+                    
+                    data_results = row[1].data
+                    result_id = row[0]
+
+                    if not isinstance(data_results,list):
+                        data_results = [data_results]
+
+                    row_df = pandas.concat([pandas.DataFrame.from_dict(item, orient='index').T for item in data_results])
+                    has_dict = [x for x in row_df.columns if isinstance(row_df[x].tolist()[0],dict)]
+                    while len(has_dict) != 0:
+                        for fieldname in has_dict:
+                            append_df = pandas.concat([pandas.DataFrame.from_dict(item, orient='index').T for item in row_df[fieldname]])
+                            append_df = append_df.drop(fieldname,axis=1,errors="ignore")
+                            row_df = pandas.concat([row_df,append_df],axis=1)
+                            row_df = row_df.drop(fieldname,axis=1)
+                        has_dict = [x for x in row_df.columns if isinstance(row_df[x].tolist()[0],dict)]
+
+                    # Add the result to the experiment
+                    row_df.index = ["%s_%s_%s" %(exp_id,result_id,x) for x in range(row_df.shape[0])]                    
+                    experiment = experiment.append(row_df)
+  
+                return experiment
+
+            # The user has selected an experiment not present in the results
+            else:
+                experiment_choices = numpy.unique(self.data["experiment_exp_id"]).tolist()
+                print "Experiment %s not present in the results. Choice are %s" %(exp_id,",".join(experiment_choices))
+        else:
+            print "ERROR: No results found to filter."
+
 
 def get_result_fields():
     return ['finishtime',
@@ -130,114 +200,4 @@ def get_filters():
                           "operator":"==",
                           "value":True}}
     return filters
-
-
-
-# HAVE NOT YET REVIEWED
-
-def select_battery(results, battery):
-    '''Selects a battery (or batteries) from results object and sorts based on worker and time of experiment completion
-    :results: a Results object
-    :battery: a string or array of strings to select the battery(s)
-    :return df: dataframe containing the appropriate result subset
-    '''
-    Pass = True
-    if isinstance(battery, (unicode, str)):
-        battery = [battery]
-    df = results.get_results()
-    for b in battery:
-        if not b in df['battery'].values:
-            print "Alert!:  The battery '%s' not found in results. Try resetting the results" % (b)  
-            Pass = False
-    assert Pass == True, "At least one battery was not found in results"
-    df = df.query("battery in %s" % battery)
-    df = df.sort_values(by = ['battery', 'experiment', 'worker', 'finishtime'])
-    df.reset_index(inplace = True)
-    return df
-    
-def select_experiment(results, exp_id):
-    '''Selects an experiment (or experiments) from results object and sorts based on worker and time of experiment completion
-    :results: a Results object
-    :param exp_id: a string or array of strings to select the experiment(s)
-    :return df: dataframe containing the appropriate result subset
-    '''
-    Pass = True
-    if isinstance(exp_id, (unicode, str)):
-        exp_id = [exp_id]
-    df = results.get_results()
-    for e in exp_id:
-        if not e in df['experiment'].values:
-            print "Alert!: The experiment '%s' not found in results. Try resetting the results" % (e)
-            Pass = False
-    assert Pass == True, "At least one experiment was not found in results"
-    df = df.query("experiment in %s" % exp_id)
-    df = df.sort_values(by = ['experiment', 'worker', 'battery', 'finishtime'])
-    return df
-    
-def select_worker(results, worker):
-    '''Selects a worker (or workers) from results object and sorts based on experiment and time of experiment completion
-    :results: a Results object
-    :worker: a string or array of strings to select the worker(s)
-    :return df: dataframe containing the appropriate result subset
-    '''
-    Pass = True
-    if isinstance(worker, (unicode, str)):
-        worker = [worker]
-    df = results.get_results()
-    for w in worker:
-        if not w in df['worker'].values:
-            print "Alert!: The experiment '%s' not found in results. Try resetting the results" % (w)
-            Pass = False
-    assert Pass == True, "At least one worker was not found in results"
-    df = df.query("worker in %s" % worker)
-    df = df.sort_values(by = ['worker', 'experiment', 'battery', 'finishtime'])
-    df.reset_index(inplace = True)
-    return df   
-
-def select_template(results, template):
-    '''Selects a template (or templates) from results object and sorts based on experiment and time of experiment completion
-    :results: a Results object
-    :template: a string or array of strings to select the worker(s)
-    :return df: dataframe containing the appropriate result subset
-    '''
-    if isinstance(template, (unicode, str)):
-        template = [template]
-    template = map(str.lower,template)
-    df = results.get_results()
-    df = df[[check_template(row['data']) in template for i,row in df.iterrows()]]
-    assert len(df) != 0, "At least one template was not found in results"
-    df = df.sort_values(by = ['worker', 'experiment', 'battery', 'finishtime'])
-    df.reset_index(inplace = True)
-    return df
-    
-def extract_experiment(results, experiment, clean = True, drop_columns = None, drop_na = True):
-    '''Returns a dataframe that has expanded the data column of the results object for the specified experiment.
-    Each row of this new dataframe is a data row for the specified experiment.
-    :results: a Results object
-    :experiment: a string identifying one experiment
-    :param clean: boolean, if true call clean_df on the data
-    :param drop_columns: list of columns to pass to clean_df
-    :param drop_na: boolean to pass to clean_df
-    :return df: dataframe containing the extracted experiment
-    '''
-    assert experiment in results.get_experiments(), "Experiment not found in results!"
-    df = select_experiment(results, experiment)
-    #ensure there is only one dataset for each battery/experiment/worker combination
-    assert sum(df.groupby(['battery', 'experiment', 'worker']).size()>1)==0, \
-        "More than one dataset found for at least one battery/experiment/worker combination"
-    trial_list = []
-    for i,row in df.iterrows():
-        exp_data = get_data(row)
-        for trial in exp_data:
-            trial['battery'] = row['battery']
-            trial['experiment'] = row['experiment']
-            trial['worker'] = row['worker']
-            trial['finishtime'] = row['finishtime']
-        trial_list += exp_data
-    df = pandas.DataFrame(trial_list)
-    if clean == True:
-        df = clean_data(df, experiment, drop_columns, drop_na)
-    df.reset_index(inplace = True)
-    return df
-
     

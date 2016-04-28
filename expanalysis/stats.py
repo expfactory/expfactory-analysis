@@ -3,6 +3,7 @@ analysis/stats.py: part of expfactory package
 stats functions
 
 '''
+
 from expanalysis.maths import check_numeric
 import scipy.stats as stats
 import seaborn as sns
@@ -12,6 +13,7 @@ import sys
 
 def compute_contrast(df, dep_var, ind_var, plot=True):
     '''compute_contrast calculates a contrast (either pearson correlation for numeric or ttest for not) between two variables in the data frame
+    NOTE: THIS FUNCTION HAS NOT BEEN REVIEWED (@vsoch)
     :param dep_var: dependent variable, must be column in data frame
     :param ind_var: independent variable, must be column in data frame
     :param plot: boolean to return plot object in result (default True)
