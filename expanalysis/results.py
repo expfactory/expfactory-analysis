@@ -91,8 +91,8 @@ class Result:
                         self.data = self.data.drop([filt],axis=1)
             
         # Separate empty datasets
-        self.empty = self.data[self.data["data"].isnull()==True]
-        self.data = self.data[self.data["data"].isnull()==False]  
+        self.empty = self.data[self.data["data"].map(bool)==False]
+        self.data = self.data[self.data["data"].map(bool)==True]  
         if self.empty.shape[0] != 0:
             print 'Empty datasets found! See Results.empty field'
        
