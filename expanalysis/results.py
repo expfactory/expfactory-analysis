@@ -45,6 +45,8 @@ class Result:
         '''results_to_df converts json result into a dataframe of json objects
         :param fields: list of (top level) fields to parse
         '''
+        if fields == None:
+            fields = get_result_fields()
         tmp = pandas.DataFrame(self.json)
         self.data = pandas.DataFrame()
         for field in fields:
