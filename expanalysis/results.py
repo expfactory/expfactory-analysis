@@ -128,9 +128,10 @@ class Result:
             print "File extension to save raw results must be .json" 
 
 
-    def extract_experiment(self,exp_id):
+    def extract_experiment(self,exp_id, fields = None):
         '''Extract the data column of the results object for a specified experiment.
         :param exp_id: the exp_id to extract
+        :param fields: list of (top level) fields to add to experiment dataframe
         '''
         if isinstance(self.data,pandas.DataFrame):
             experiment = pandas.DataFrame()
@@ -147,8 +148,10 @@ class Result:
 
                     if not isinstance(data_results,list):
                         data_results = [data_results]
-
-                    row_df = pandas.concat([pandas.DataFrame.from_dict(item, orient='index').T for item in data_results])
+                        row_df = pandas.concat([pandas.DataFrame.from_dict(item, orient='index') for item in data_results])
+                    else:
+                        row_df = pandas.concat([pandas.DataFrame.from_dict(item, orient='index').T for item in data_results])
+                    
                     has_dict = [x for x in row_df.columns if isinstance(row_df[x].tolist()[0],dict)]
                     while len(has_dict) != 0:
                         for fieldname in has_dict:
@@ -157,7 +160,13 @@ class Result:
                             row_df = pandas.concat([row_df,append_df],axis=1)
                             row_df = row_df.drop(fieldname,axis=1)
                         has_dict = [x for x in row_df.columns if isinstance(row_df[x].tolist()[0],dict)]
-
+                    
+                    # Add additional fields to dataframe
+                    if fields:
+                        if isinstance(fields,str):
+                            fields = [fields]
+                        for field in fields:
+                            row_df[field] = row[1][field]
                     # Add the result to the experiment
                     row_df.index = ["%s_%s_%s" %(exp_id,result_id,x) for x in range(row_df.shape[0])]                    
                     experiment = experiment.append(row_df)
