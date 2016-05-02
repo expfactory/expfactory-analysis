@@ -22,6 +22,8 @@ class Result:
         """
         if fields == None:
             fields = get_result_fields()
+        if filters == None:
+            filters = get_filters()
         self.data = None
         self.fields = fields
         self.filters = filters
@@ -41,12 +43,12 @@ class Result:
         self.clean_results(self.filters)
         return self.data
 
-    def results_to_df(self,fields):
+    def results_to_df(self,fields = None):
         '''results_to_df converts json result into a dataframe of json objects
         :param fields: list of (top level) fields to parse
         '''
         if fields == None:
-            fields = get_result_fields()
+            fields = self.fields
         tmp = pandas.DataFrame(self.json)
         self.data = pandas.DataFrame()
         for field in fields:
@@ -68,7 +70,7 @@ class Result:
                         results.get_filters() to see an example
         '''
         if filters == None:
-            filters = get_filters()
+            filters = self.filters
  
         # Apply user filters
         for filt,params in filters.iteritems():
